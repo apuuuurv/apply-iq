@@ -72,7 +72,7 @@ const itemVariants = {
 
 export function LandingFeatures() {
   return (
-    <section id="features" className="py-24 sm:py-32">
+    <section id="features" className="py-16 sm:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <motion.h2
@@ -107,15 +107,23 @@ export function LandingFeatures() {
             <motion.div
               key={feature.name}
               variants={itemVariants}
-              className="group relative overflow-hidden rounded-xl border border-border bg-card p-6 transition-all hover:border-accent/50 hover:shadow-lg"
+              whileHover={{ 
+                y: -8, 
+                scale: 1.02,
+                transition: { type: "spring", stiffness: 400, damping: 10 } 
+              }}
+              className="group relative overflow-hidden rounded-2xl p-8 liquid-glass liquid-glass-hover cursor-pointer"
             >
-              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-muted transition-colors group-hover:bg-accent/10">
-                <feature.icon className="h-6 w-6 text-muted-foreground transition-colors group-hover:text-accent" />
+              <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 transition-all duration-500 group-hover:bg-primary group-hover:text-primary-foreground group-hover:rotate-[360deg] shadow-lg group-hover:shadow-primary/40">
+                <feature.icon className="h-6 w-6" />
               </div>
-              <h3 className="mb-2 text-lg font-semibold">{feature.name}</h3>
-              <p className="text-sm leading-relaxed text-muted-foreground">
+              <h3 className="mb-3 text-xl font-bold tracking-tight group-hover:text-primary transition-colors">
+                {feature.name}
+              </h3>
+              <p className="text-sm leading-relaxed text-muted-foreground/80 group-hover:text-muted-foreground transition-colors">
                 {feature.description}
               </p>
+              <div className="absolute -right-4 -bottom-4 h-24 w-24 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
             </motion.div>
           ))}
         </motion.div>

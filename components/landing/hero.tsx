@@ -4,68 +4,80 @@ import Link from "next/link"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Upload, Sparkles } from "lucide-react"
+import { useEffect, useState } from "react"
+import { createClient } from "@/lib/supabase/client"
 
 export function LandingHero() {
+  const [user, setUser] = useState<any>(null)
+  const supabase = createClient()
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+    }
+    getUser()
+  }, [supabase])
+
   return (
-    <section className="relative overflow-hidden pt-32 pb-20 sm:pt-40 sm:pb-32">
-      {/* Background gradient */}
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute top-1/4 left-1/2 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-accent/20 blur-[120px]" />
-      </div>
+    <section id="home" className="relative overflow-hidden pt-32 pb-20 sm:pt-40 sm:pb-32">
+      {/* Background provided by AuroraBackground wrapper */}
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-3xl text-center">
+        <div className="mx-auto max-w-4xl text-center">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
           >
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-muted/50 px-4 py-1.5 text-sm">
-              <Sparkles className="h-4 w-4 text-accent" />
-              <span className="text-muted-foreground">AI-Powered Job Search Assistant</span>
+            <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-sm backdrop-blur-md">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span className="text-muted-foreground/90 font-medium">The Future of Job Tracking is here</span>
             </div>
           </motion.div>
 
           <motion.h1
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-4xl font-bold tracking-tight sm:text-6xl lg:text-7xl text-balance"
+            transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className="text-5xl font-extrabold tracking-tight sm:text-7xl lg:text-8xl text-balance"
           >
-            Track Jobs.{" "}
-            <span className="bg-gradient-to-r from-foreground to-foreground/60 bg-clip-text text-transparent">
-              Optimize Resume.
+            <span className="text-foreground/90">Track Jobs.</span>{" "}
+            <span className="bg-gradient-to-br from-primary via-aurora-2 to-aurora-1 bg-clip-text text-transparent italic">
+              Optimize Results.
             </span>{" "}
-            Get Hired Faster.
+            <span className="text-foreground/90">Master Careers.</span>
           </motion.h1>
 
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="mt-6 text-lg leading-relaxed text-muted-foreground sm:text-xl text-pretty"
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="mt-8 text-xl leading-relaxed text-muted-foreground/90 sm:text-2xl text-pretty max-w-2xl mx-auto"
           >
-            ApplyIQ helps you manage your job applications, analyze your resume
-            against job descriptions, and identify skill gaps to land your dream
-            job faster.
+            ApplyIQ is your intelligent command center for job hunting. Leverage AI to bridge skill gaps and land your next role in record time.
           </motion.p>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
+            transition={{ type: "spring", stiffness: 100, damping: 20, delay: 0.3 }}
             className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row"
           >
-            <Link href="/register">
-              <Button size="lg" className="group h-12 px-6">
-                Get Started
+            <Link href={user ? "/dashboard" : "/register"}>
+              <Button size="lg" className="group h-12 px-8 rounded-full shadow-[0_0_20px_rgba(var(--primary),0.3)] hover:shadow-[0_0_30px_rgba(var(--primary),0.5)] transition-all">
+                {user ? "Go to Dashboard" : "Get Started"}
                 <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
             <Link href="/dashboard/resume">
-              <Button variant="outline" size="lg" className="h-12 px-6 bg-transparent">
-                <Upload className="mr-2 h-4 w-4" />
-                Upload Resume
+              <Button
+                variant="outline"
+                size="lg"
+                className="h-12 px-8 rounded-full border-zinc-200 dark:border-white/30 bg-white/10 dark:bg-white/10 backdrop-blur-md hover:bg-zinc-100 dark:hover:bg-white/20 transition-all group shadow-sm"
+              >
+                <Upload className="mr-2 h-4 w-4 text-zinc-950 dark:text-white group-hover:scale-110 transition-transform" />
+                <span className="text-zinc-950 dark:text-white font-medium">Upload Resume</span>
               </Button>
             </Link>
           </motion.div>
