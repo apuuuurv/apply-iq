@@ -5,11 +5,18 @@ import { revalidatePath } from 'next/cache'
 
 export interface Resume {
   id?: string
-  fileName: string
+  fileName?: string
+  file_name?: string
   fileUrl?: string
+  file_url?: string
   extractedSkills?: string[]
+  extracted_skills?: string[]
   analysisResult?: Record<string, any>
+  analysis_result?: Record<string, any>
   matchScore?: number
+  match_score?: number
+  created_at?: string
+  updated_at?: string
 }
 
 // Get all resumes for the current user

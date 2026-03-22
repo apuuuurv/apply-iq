@@ -21,7 +21,7 @@ Extraction Strategy:
 import logging
 import json
 import os
-from typing import List, Set
+from typing import List, Set, Optional
 import spacy
 from difflib import SequenceMatcher
 
@@ -39,7 +39,7 @@ class SkillExtractor:
     - Returns unique, deduplicated skills
     """
     
-    def __init__(self, skills_json_path: str = None):
+    def __init__(self, skills_json_path: Optional[str] = None):
         """
         Initialize the skill extractor.
         
@@ -177,62 +177,87 @@ class SkillExtractor:
         ratio = SequenceMatcher(None, text, normalized_skill).ratio()
         return ratio >= threshold
     
-    def extract_skills(self, text: str) -> List[str]:
+    def extract_potential_skills(self, text: str) -> Set[str]:
         """
-        Extract skills from text.
+        Extract potential skills from text using regex and heuristics.
         
-        Algorithm:
-        1. Normalize text (lowercase)
-        2. For each skill in database:
-           - Check if skill (or variation) appears in text
-           - Use fuzzy matching for typo tolerance
-        3. Return deduplicated skills
+        This looks for:
+        - Common tech patterns (Node.js, C++, C#, .NET)
+        - PascalCase/camelCase words that might be frameworks
+        - Uppercase acronyms (AWS, GCP, SQL)
+        - Intersection with the global skills list
         
         Args:
-            text: Resume or job description text
+            text: Raw text to extract from
             
         Returns:
-            List of extracted skills
+            Set of potential skill strings
         """
-        if not text or not isinstance(text, str):
-            logger.warning("Invalid text provided to extract_skills")
-            return []
+        import re
         
+        # 1. Start with matches from the global list (reliable)
+        found_skills = set()
         normalized_text = self._normalize_text(text)
-        extracted_skills: Set[str] = set()
         
         for skill in self.skills_list:
             if self._fuzzy_match(normalized_text, skill):
-                extracted_skills.add(skill)
+                found_skills.add(skill)
         
-        result = sorted(list(extracted_skills))
-        logger.info(f"Extracted {len(result)} skills from text")
-        return result
-    
-    def extract_skills_with_context(self, text: str) -> List[str]:
+        # 2. Add regex-based tech patterns (less reliable, but catches new terms)
+        # Patterns like Node.js, React.js, C++, C#, .NET, Web3, Vue3
+        tech_patterns = [
+            r'\b[A-Z][a-z]+(?:\.[a-z]+|[A-Z][a-z]+)+\b', # PascalCase/camelCase
+            r'\b[A-Za-z]+\.js\b',                        # *.js
+            r'\b[A-Z]{2,}\b',                            # Acronyms (AWS, GCP)
+            r'\b[A-Za-z]+\+\+\b',                        # C++
+            r'\b[A-Za-z]+#\b',                           # C#
+            r'\.\b[A-Za-z]+\b',                          # .NET
+        ]
+        
+        for pattern in tech_patterns:
+            matches = re.findall(pattern, text)
+            for match in matches:
+                # Basic validation: length and not common words
+                if len(match) > 1 and match.lower() not in ['the', 'and', 'for', 'with', 'from']:
+                    found_skills.add(match)
+        
+        return found_skills
+
+    def classify_skill(self, skill: str) -> str:
         """
-        Extract skills using spaCy NER for better context understanding.
-        
-        This method:
-        1. Uses spaCy to identify potential entities
-        2. Combines with skill list matching
-        3. Returns high-confidence skill matches
-        
-        This is more sophisticated but slower than extract_skills().
-        Use this when accuracy is more important than speed.
+        Classify a skill as 'tech' or 'secondary'.
         
         Args:
-            text: Resume or job description text
+            skill: Skill name
             
         Returns:
-            List of extracted skills with context awareness
+            'tech' or 'secondary'
         """
-        try:
-            doc = self.nlp(text)
-            skills = self.extract_skills(text)
+        soft_skill_keywords = [
+            'communication', 'leadership', 'problem solving', 'team', 
+            'management', 'agile', 'scrum', 'critical thinking', 
+            'adaptability', 'creativity', 'time management', 'collaboration'
+        ]
+        
+        skill_lower = skill.lower()
+        for keyword in soft_skill_keywords:
+            if keyword in skill_lower:
+                return 'secondary'
+                
+        return 'tech'
+
+    def extract_skills(self, text: str) -> List[str]:
+        """
+        Extract skills from text.
+        """
+        if not text:
+            return []
             
-            logger.info(f"Extracted {len(skills)} skills using context-aware method")
-            return skills
-        except Exception as e:
-            logger.warning(f"Error in context-aware extraction: {str(e)}, falling back to basic extraction")
-            return self.extract_skills(text)
+        potential_skills = self.extract_potential_skills(text)
+        return sorted(list(potential_skills))
+
+    def extract_skills_with_context(self, text: str) -> List[str]:
+        """
+        Fallback to basic extraction for now.
+        """
+        return self.extract_skills(text)

@@ -11,11 +11,21 @@
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
 
+export interface SkillGap {
+  skill: string
+  weight: number
+  is_critical: boolean
+}
+
 export interface AnalysisResponse {
   match_score: number
   resume_skills: string[]
   jd_skills: string[]
-  missing_skills: string[]
+  matched_skills: string[]
+  tech_stack_matches: string[]
+  secondary_matches: string[]
+  missing_skills: SkillGap[]
+  skill_gap_summary: string
   error?: string
 }
 

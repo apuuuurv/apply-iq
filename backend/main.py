@@ -276,24 +276,81 @@ async def analyze_resume(
             resume_text = clean_text(resume_text)
             job_description_clean = clean_text(job_description)
             
-            # ====== SKILL EXTRACTION ======
+            # ====== NEW ANALYSIS LOGIC ======
             
-            logger.info("Extracting skills from resume...")
-            resume_skills = skill_extractor.extract_skills(resume_text)
+            # 1. Get required skills from JD
+            jd_skills_raw = skill_extractor.extract_skills(job_description_clean)
+            jd_skills_set = set(s.lower() for s in jd_skills_raw)
             
-            logger.info("Extracting skills from job description...")
-            jd_skills = skill_extractor.extract_skills(job_description_clean)
+            # 2. Get resume skills
+            resume_skills_raw = skill_extractor.extract_skills(resume_text)
+            resume_skills_set = set(s.lower() for s in resume_skills_raw)
             
-            # ====== SKILL GAP ANALYSIS ======
+            # 3. Calculate strict intersection (Matched Skills)
+            matched_skills_set = jd_skills_set.intersection(resume_skills_set)
             
-            # Find missing skills (skills in JD but not in resume)
-            resume_skills_set = set(s.lower() for s in resume_skills)
-            jd_skills_set = set(s.lower() for s in jd_skills)
+            # Map back to original casing from JD (prefer JD casing)
+            skill_map = {s.lower(): s for s in jd_skills_raw}
+            matched_skills = sorted([skill_map[s] for s in matched_skills_set])
+            
+            # 4. Categorize matched skills
+            tech_stack_matches = [s for s in matched_skills if skill_extractor.classify_skill(s) == 'tech']
+            secondary_matches = [s for s in matched_skills if skill_extractor.classify_skill(s) == 'secondary']
+            
+            # 5. Calculate weights for missing skills
             missing_skills_set = jd_skills_set - resume_skills_set
-            missing_skills = sorted(list(missing_skills_set))
+            missing_skills_data = []
             
-            logger.info(f"Missing skills: {missing_skills}")
+            # Find total count of alljd keywords for relative weighting
+            total_jd_mentions = 0
+            skill_counts = {}
+            for skill_lower in jd_skills_set:
+                # Count occurrences of the skill in JD
+                # Simple count for now, could be improved with regex
+                count = job_description_clean.count(skill_lower)
+                skill_counts[skill_lower] = count
+                total_jd_mentions += count
             
+            for skill_lower in sorted(list(missing_skills_set)):
+                skill_name = skill_map[skill_lower]
+                count = skill_counts[skill_lower]
+                
+                # Formula: (Count / Total JD Keyword Count) * 100
+                # But also apply the 3+ times = 100%, 1 time = 40% heuristic
+                if count >= 3:
+                    weight = 100.0
+                elif count == 2:
+                    weight = 70.0
+                else:
+                    weight = 40.0
+                
+                # Adjust weight relative to JD importance if JD is very long
+                # weight = (count / total_jd_mentions) * 100 if total_jd_mentions > 0 else weight
+                
+                is_critical = weight >= 80 or skill_extractor.classify_skill(skill_name) == 'tech'
+                
+                missing_skills_data.append(
+                    {
+                        "skill": skill_name,
+                        "weight": weight,
+                        "is_critical": is_critical
+                    }
+                )
+            
+            # 6. Generate Skill Gap Summary
+            tech_total = len([s for s in jd_skills_raw if skill_extractor.classify_skill(s) == 'tech'])
+            tech_matched = len(tech_stack_matches)
+            tech_percent = round((tech_matched / tech_total) * 100) if tech_total > 0 else 0
+            
+            critical_missing = [m['skill'] for m in missing_skills_data if m['is_critical']][:2]
+            critical_str = f" ({', '.join(critical_missing)})" if critical_missing else ""
+            
+            summary = f"Your resume covers {tech_percent}% of the required tech stack. "
+            if critical_missing:
+                summary += f"You are missing critical {skill_extractor.classify_skill(critical_missing[0])} frameworks{critical_str}."
+            else:
+                summary += "You have a strong match for the primary requirements."
+
             # ====== SEMANTIC MATCHING ======
             
             logger.info("Computing semantic similarity...")
@@ -302,16 +359,17 @@ async def analyze_resume(
                 job_description_clean
             )
             
-            logger.info(f"Match score: {match_score:.2f}%")
-            logger.info(f"Metadata: {metadata}")
-            
             # ====== BUILD RESPONSE ======
             
             response = ResumeAnalysisResponse(
                 match_score=round(match_score, 2),
-                resume_skills=resume_skills,
-                jd_skills=jd_skills,
-                missing_skills=missing_skills
+                resume_skills=resume_skills_raw,
+                jd_skills=jd_skills_raw,
+                matched_skills=matched_skills,
+                tech_stack_matches=tech_stack_matches,
+                secondary_matches=secondary_matches,
+                missing_skills=missing_skills_data,
+                skill_gap_summary=summary
             )
             
             logger.info("✓ Analysis completed successfully")
