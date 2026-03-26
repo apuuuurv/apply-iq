@@ -9,6 +9,7 @@ import {
   Briefcase,
   FileSearch,
   Target,
+  Flame,
   Bell,
   Settings,
   LogOut,
@@ -42,6 +43,11 @@ const navigation = [
     name: "Skill Gap Analysis",
     href: "/dashboard/skills",
     icon: Target,
+  },
+  {
+    name: "Resume Roaster",
+    href: "/dashboard/roaster",
+    icon: Flame,
   },
   {
     name: "Notifications",
@@ -144,9 +150,9 @@ export function DashboardSidebar({ onClose }: DashboardSidebarProps) {
     .toUpperCase() || "U"
 
   return (
-    <div className="flex h-full w-64 flex-col border-r border-sidebar-border bg-sidebar">
+    <div className="flex h-full w-64 flex-col border-r border-zinc-200 dark:border-sidebar-border bg-zinc-100 dark:bg-sidebar">
       {/* Header */}
-      <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
+      <div className="flex h-16 items-center justify-between border-b border-zinc-200 dark:border-sidebar-border px-4">
         <Link href="/dashboard" className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-primary">
             <Briefcase className="h-4 w-4 text-sidebar-primary-foreground" />
@@ -171,7 +177,7 @@ export function DashboardSidebar({ onClose }: DashboardSidebarProps) {
       <div className="px-3 pt-4">
         <Link 
           href="/" 
-          className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-all"
+          className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 dark:text-sidebar-foreground/60 hover:bg-zinc-200/50 dark:hover:bg-sidebar-accent/50 hover:text-zinc-900 dark:hover:text-sidebar-foreground transition-all"
         >
           <Target className="h-5 w-5 rotate-180" /> {/* Using Target as a substitute for Home for now or importing Home */}
           <span>Back to Landing</span>
@@ -199,16 +205,16 @@ export function DashboardSidebar({ onClose }: DashboardSidebarProps) {
               className={cn(
                 "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
                 isActive
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                  ? "bg-blue-50 text-blue-600 dark:bg-sidebar-accent dark:text-sidebar-accent-foreground"
+                  : "text-zinc-600 dark:text-sidebar-foreground/70 hover:bg-zinc-200/50 dark:hover:bg-sidebar-accent/50 hover:text-zinc-900 dark:hover:text-sidebar-foreground"
               )}
             >
               <item.icon
                 className={cn(
                   "h-5 w-5 shrink-0 transition-colors",
                   isActive
-                    ? "text-sidebar-primary"
-                    : "text-sidebar-foreground/50 group-hover:text-sidebar-foreground/70"
+                    ? "text-blue-600 dark:text-sidebar-primary"
+                    : "text-zinc-400 dark:text-sidebar-foreground/50 group-hover:text-zinc-600 dark:group-hover:text-sidebar-foreground/70"
                 )}
               />
               <span className="flex-1">{item.name}</span>
@@ -229,24 +235,24 @@ export function DashboardSidebar({ onClose }: DashboardSidebarProps) {
       </nav>
 
       {/* User Section */}
-      <div className="border-t border-sidebar-border p-4">
+      <div className="border-t border-zinc-200 dark:border-sidebar-border p-4">
         <div className="flex items-center gap-3">
           <Avatar className="h-9 w-9">
             <AvatarImage src={profile?.avatar_url || "https://github.com/shadcn.png"} alt="User" />
             <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
           <div className="flex-1 overflow-hidden">
-            <p className="truncate text-sm font-medium text-sidebar-foreground">
+            <p className="truncate text-sm font-medium text-zinc-900 dark:text-sidebar-foreground">
               {userName}
             </p>
-            <p className="truncate text-xs text-sidebar-foreground/60">
+            <p className="truncate text-xs text-zinc-500 dark:text-sidebar-foreground/60">
               {userEmail}
             </p>
           </div>
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 shrink-0 text-sidebar-foreground/60 hover:text-sidebar-foreground"
+            className="h-8 w-8 shrink-0 text-zinc-500 hover:text-zinc-900 dark:text-sidebar-foreground/60 dark:hover:text-sidebar-foreground"
             onClick={handleLogout}
           >
             <LogOut className="h-4 w-4" />

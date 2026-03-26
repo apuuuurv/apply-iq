@@ -4,6 +4,7 @@ import { Inter } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
+import { Preloader } from "@/components/preloader"
 import "./globals.css"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -12,7 +13,7 @@ export const metadata: Metadata = {
   title: "ApplyIQ - AI Job Application Tracker & Resume Analyzer",
   description:
     "Track your job applications, analyze your resume with AI, and get hired faster with intelligent insights.",
-  generator: "v0.app",
+
   icons: {
     icon: [
       {
@@ -46,6 +47,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <Preloader />
           {children}
           <Toaster />
         </ThemeProvider>

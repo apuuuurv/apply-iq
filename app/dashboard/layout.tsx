@@ -91,7 +91,7 @@ export default function DashboardLayout({
         {/* Main Content */}
         <div className="flex flex-1 flex-col overflow-hidden">
           <DashboardHeader onMenuClick={() => setSidebarOpen(true)} />
-          <main className="flex-1 overflow-y-auto">
+          <main className="flex-1 overflow-y-auto bg-zinc-50 dark:bg-background">
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}

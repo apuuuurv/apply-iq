@@ -171,10 +171,10 @@ export default function DashboardPage() {
     <div className="space-y-8">
       {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl text-zinc-950 dark:text-zinc-100">
           Dashboard
         </h1>
-        <p className="mt-1 text-muted-foreground">
+        <p className="mt-1 text-zinc-600 dark:text-muted-foreground">
           Welcome back! Here&apos;s an overview of your job search.
         </p>
       </div>
@@ -188,7 +188,7 @@ export default function DashboardPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: index * 0.1 }}
           >
-            <Card>
+            <Card className="bg-white/80 dark:bg-card backdrop-blur-md border-zinc-200 dark:border-border shadow-sm shadow-blue-500/5 dark:shadow-none">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
@@ -210,8 +210,8 @@ export default function DashboardPage() {
                   </div>
                 </div>
                 <div className="mt-4">
-                  <p className="text-2xl font-bold">{stat.value}</p>
-                  <p className="text-sm text-muted-foreground">{stat.name}</p>
+                  <p className="text-2xl font-bold text-zinc-950 dark:text-zinc-100">{stat.value}</p>
+                  <p className="text-sm text-zinc-600 dark:text-muted-foreground">{stat.name}</p>
                 </div>
               </CardContent>
             </Card>
@@ -226,7 +226,7 @@ export default function DashboardPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.4 }}
         >
-          <Card>
+          <Card className="bg-white/80 dark:bg-card backdrop-blur-md border-zinc-200 dark:border-border shadow-sm shadow-blue-500/5 dark:shadow-none">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Recent Applications</CardTitle>
               <Link href="/dashboard/applications">
@@ -247,10 +247,10 @@ export default function DashboardPage() {
                         {application.company.charAt(0)}
                       </div>
                       <div>
-                        <p className="text-sm font-medium">
+                        <p className="text-sm font-medium text-zinc-950 dark:text-zinc-100">
                           {application.company}
                         </p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-zinc-500 dark:text-muted-foreground">
                           {application.role}
                         </p>
                       </div>
@@ -275,7 +275,7 @@ export default function DashboardPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.5 }}
         >
-          <Card>
+          <Card className="bg-white/80 dark:bg-card backdrop-blur-md border-zinc-200 dark:border-border shadow-sm shadow-blue-500/5 dark:shadow-none">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Resume Match Score</CardTitle>
               <Link href="/dashboard/resume">
@@ -289,7 +289,7 @@ export default function DashboardPage() {
                 <div className="relative mx-auto h-32 w-32">
                   <svg className="h-full w-full -rotate-90" viewBox="0 0 100 100">
                     <circle
-                      className="stroke-muted"
+                      className="stroke-zinc-200 dark:stroke-muted"
                       strokeWidth="10"
                       fill="none"
                       r="40"
@@ -297,7 +297,7 @@ export default function DashboardPage() {
                       cy="50"
                     />
                     <circle
-                      className="stroke-accent transition-all duration-1000"
+                      className="stroke-cyan-500 dark:stroke-accent transition-all duration-1000"
                       strokeWidth="10"
                       fill="none"
                       r="40"
@@ -308,12 +308,12 @@ export default function DashboardPage() {
                     />
                   </svg>
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-3xl font-bold">
+                    <span className="text-3xl font-bold text-zinc-950 dark:text-zinc-100">
                       {resumeMatchScore}%
                     </span>
                   </div>
                 </div>
-                <p className="mt-2 text-sm text-muted-foreground">
+                <p className="mt-2 text-sm text-zinc-600 dark:text-muted-foreground">
                   {resumeMatchScore > 0 
                     ? "Match score from latest resume analysis"
                     : "Upload a resume to see match score"}
@@ -322,7 +322,7 @@ export default function DashboardPage() {
 
               <div className="space-y-3">
                 <div>
-                  <div className="mb-1 flex justify-between text-sm">
+                  <div className="mb-1 flex justify-between text-sm text-zinc-950 dark:text-zinc-100">
                     <span>Response Rate</span>
                     <span className="font-medium">
                       {responseRate}%
@@ -349,7 +349,7 @@ export default function DashboardPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.6 }}
       >
-        <Card>
+        <Card className="bg-white/80 dark:bg-card backdrop-blur-md border-zinc-200 dark:border-border shadow-sm shadow-blue-500/5 dark:shadow-none">
           <CardHeader>
             <CardTitle>Quick Actions</CardTitle>
           </CardHeader>

@@ -16,6 +16,7 @@ import {
   Plus,
   Sparkles,
   Loader2,
+  Info,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -64,7 +65,7 @@ const priorityColors: Record<string, string> = {
 }
 
 export default function SkillGapPage() {
-  const { missingSkills: contextMissingSkills, lastAnalysisDate } = useSkillGap()
+  const { missingSkills: contextMissingSkills, matchedSkills: contextMatchedSkills, matchScore: contextMatchScore, lastAnalysisDate } = useSkillGap()
   const [selectedTab, setSelectedTab] = useState("overview")
   const [loading, setLoading] = useState(true)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
@@ -215,7 +216,7 @@ export default function SkillGapPage() {
           <h1 className="text-2xl font-black tracking-tight sm:text-3xl text-zinc-950 dark:text-white uppercase italic">
             Skill Gap Analysis
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground font-bold uppercase tracking-widest">
+          <p className="mt-1 text-sm text-zinc-600 dark:text-muted-foreground font-bold uppercase tracking-widest">
             Level up your career with AI-powered insights
           </p>
         </div>
@@ -246,14 +247,14 @@ export default function SkillGapPage() {
                 animate={{ opacity: 1, y: 0 }} 
                 transition={{ delay: i * 0.1 }}
               >
-                <Card className="border-zinc-800 bg-muted/5 backdrop-blur-sm overflow-hidden group">
+                <Card className="border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-muted/5 backdrop-blur-sm overflow-hidden group shadow-sm shadow-blue-500/5 dark:shadow-none">
                   <CardContent className="p-6 flex items-center gap-4 relative">
                     <div className={cn("rounded-xl p-2 shrink-0 transition-transform group-hover:scale-110", stat.bg, stat.color)}>
                       <stat.icon className="h-5 w-5" />
                     </div>
                     <div>
                       <p className="text-2xl font-black text-zinc-950 dark:text-zinc-100">{stat.value}</p>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{stat.label}</p>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 dark:text-muted-foreground">{stat.label}</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -262,9 +263,9 @@ export default function SkillGapPage() {
           </div>
 
           {/* Radar Chart Analysis */}
-          <Card className="border-zinc-800 bg-muted/5 backdrop-blur-lg overflow-hidden">
-            <CardHeader className="pb-2 border-b border-zinc-800/50 bg-zinc-950/20">
-              <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-[#22d3ee] flex items-center gap-2">
+          <Card className="border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-muted/5 backdrop-blur-lg overflow-hidden shadow-sm shadow-blue-500/5 dark:shadow-none">
+            <CardHeader className="pb-2 border-b border-zinc-200 dark:border-zinc-800/50 bg-zinc-50 dark:bg-zinc-950/20">
+              <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-600 dark:text-[#22d3ee] flex items-center gap-2">
                 <Target className="h-3 w-3" />
                 Skill Comparison Analysis
               </CardTitle>
@@ -321,10 +322,10 @@ export default function SkillGapPage() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.4 }}
           >
-            <Card className="border-[#22d3ee]/20 bg-[#22d3ee]/5 backdrop-blur-sm overflow-hidden">
+            <Card className="border-cyan-200 dark:border-[#22d3ee]/20 bg-cyan-50/50 dark:bg-[#22d3ee]/5 backdrop-blur-sm overflow-hidden shadow-sm shadow-blue-500/5 dark:shadow-none">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-black text-zinc-950 dark:text-zinc-100 uppercase tracking-widest flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-[#22d3ee]" />
+                  <Sparkles className="h-4 w-4 text-cyan-500 dark:text-[#22d3ee]" />
                   Ad-hoc Job Analysis
                 </CardTitle>
               </CardHeader>
@@ -333,12 +334,12 @@ export default function SkillGapPage() {
                   placeholder="Paste a specific job description to find missing skills..."
                   value={jobDescription}
                   onChange={(e) => setJobDescription(e.target.value)}
-                  className="min-h-[140px] border-zinc-800 bg-black/40 text-zinc-100 focus-visible:ring-[#22d3ee] rounded-xl resize-none"
+                  className="min-h-[140px] border-zinc-300 dark:border-zinc-800 bg-white/80 dark:bg-black/40 text-zinc-900 dark:text-zinc-100 focus-visible:ring-cyan-500 dark:focus-visible:ring-[#22d3ee] rounded-xl resize-none placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
                 />
                 <Button 
                   onClick={handleAnalyzeSkills} 
                   disabled={isAnalyzing || !jobDescription.trim()}
-                  className="w-full bg-[#22d3ee] text-zinc-950 font-black uppercase tracking-widest hover:bg-[#22d3ee]/90 rounded-xl"
+                  className="w-full bg-cyan-500 dark:bg-[#22d3ee] text-white dark:text-zinc-950 font-black uppercase tracking-widest hover:bg-cyan-600 dark:hover:bg-[#22d3ee]/90 rounded-xl"
                 >
                   {isAnalyzing ? (
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -352,16 +353,16 @@ export default function SkillGapPage() {
 
         {/* Roadmap Timeline */}
         <div className="space-y-8">
-          <Card className="border-zinc-800 bg-muted/5 backdrop-blur-md h-full sticky top-8">
-            <CardHeader className="pb-4 border-b border-zinc-800/50 bg-zinc-950/20">
-              <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-[#22d3ee] flex items-center gap-2">
-                <Zap className="h-3 w-3 fill-[#22d3ee]" />
+          <Card className="border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-muted/5 backdrop-blur-md h-full sticky top-8 shadow-sm shadow-blue-500/5 dark:shadow-none">
+            <CardHeader className="pb-4 border-b border-zinc-200 dark:border-zinc-800/50 bg-zinc-50 dark:bg-zinc-950/20">
+              <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-600 dark:text-[#22d3ee] flex items-center gap-2">
+                <Zap className="h-3 w-3 fill-cyan-600 dark:fill-[#22d3ee]" />
                 Your Learning Roadmap
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-8">
               {missingSkills.length > 0 ? (
-                <div className="relative space-y-10 before:absolute before:left-[17px] before:top-2 before:h-[calc(100%-16px)] before:w-0.5 before:bg-gradient-to-b before:from-[#22d3ee]/40 before:to-transparent">
+                <div className="relative space-y-10 before:absolute before:left-[17px] before:top-2 before:h-[calc(100%-16px)] before:w-0.5 before:bg-gradient-to-b before:from-cyan-300 dark:before:from-[#22d3ee]/40 before:to-transparent">
                   {missingSkills.map((skill, idx) => (
                     <motion.div 
                       key={idx} 
@@ -370,8 +371,8 @@ export default function SkillGapPage() {
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: idx * 0.1 }}
                     >
-                      <div className="absolute left-0 top-1 h-9 w-9 rounded-xl bg-zinc-950 border border-zinc-800 flex items-center justify-center z-10 shadow-lg group-hover:border-[#22d3ee]/50 transition-colors">
-                        <span className="text-[10px] font-black text-zinc-500 group-hover:text-[#22d3ee]">0{idx + 1}</span>
+                      <div className="absolute left-0 top-1 h-9 w-9 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center z-10 shadow-sm dark:shadow-lg group-hover:border-cyan-500/50 dark:group-hover:border-[#22d3ee]/50 transition-colors">
+                        <span className="text-[10px] font-black text-zinc-500 group-hover:text-cyan-600 dark:group-hover:text-[#22d3ee]">0{idx + 1}</span>
                       </div>
                       <div className="space-y-2">
                         <h4 className="text-sm font-black text-zinc-950 dark:text-zinc-100 capitalize tracking-tight">{skill.name}</h4>
@@ -380,7 +381,7 @@ export default function SkillGapPage() {
                             href={`https://www.google.com/search?q=${encodeURIComponent(skill.name + ' documentation')}`} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="bg-zinc-900 hover:bg-zinc-800 text-[8px] font-black px-2 py-1 rounded-md border border-zinc-800 text-muted-foreground hover:text-white transition-all flex items-center gap-1.5 uppercase tracking-widest"
+                            className="bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-[8px] font-black px-2 py-1 rounded-md border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-muted-foreground hover:text-zinc-900 dark:hover:text-white transition-all flex items-center gap-1.5 uppercase tracking-widest"
                           >
                             Documentation <ExternalLink className="h-2 w-2" />
                           </a>
@@ -388,7 +389,7 @@ export default function SkillGapPage() {
                             href={`https://www.coursera.org/search?query=${encodeURIComponent(skill.name)}`} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="bg-[#22d3ee]/10 hover:bg-[#22d3ee]/20 text-[#22d3ee] text-[8px] font-black px-2 py-1 rounded-md border border-[#22d3ee]/20 transition-all flex items-center gap-1.5 uppercase tracking-widest"
+                            className="bg-cyan-50 dark:bg-[#22d3ee]/10 hover:bg-cyan-100 dark:hover:bg-[#22d3ee]/20 text-cyan-600 dark:text-[#22d3ee] text-[8px] font-black px-2 py-1 rounded-md border border-cyan-200 dark:border-[#22d3ee]/20 transition-all flex items-center gap-1.5 uppercase tracking-widest"
                           >
                             Video Course <ExternalLink className="h-2 w-2" />
                           </a>
@@ -434,12 +435,12 @@ export default function SkillGapPage() {
 
       {/* Detail Tabs Section */}
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className="mt-12">
-        <TabsList className="bg-zinc-900 border border-zinc-800 p-1 mb-8">
+        <TabsList className="bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-1 mb-8">
           {["overview", "skills", "suggestions"].map((tab) => (
             <TabsTrigger 
               key={tab}
               value={tab} 
-              className="data-[state=active]:bg-[#22d3ee] data-[state=active]:text-zinc-950 font-black uppercase tracking-widest text-[10px] py-2 px-6"
+              className="data-[state=active]:bg-cyan-500 dark:data-[state=active]:bg-[#22d3ee] data-[state=active]:text-white dark:data-[state=active]:text-zinc-950 font-black uppercase tracking-widest text-[10px] py-2 px-6"
             >
               {tab}
             </TabsTrigger>
@@ -448,40 +449,56 @@ export default function SkillGapPage() {
 
         <TabsContent value="overview" className="mt-0">
           <div className="grid gap-6 md:grid-cols-2">
-            <Card className="border-zinc-800 bg-muted/5 backdrop-blur-sm">
+            {/* Strongest Skills — reads from Global State matchedSkills */}
+            <Card className="border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-muted/5 backdrop-blur-sm shadow-sm shadow-blue-500/5 dark:shadow-none">
               <CardHeader>
-                <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-green-500">Strongest Skills</CardTitle>
+                <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-green-500">Strongest Skills</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
-                {matchedSkills.length > 0 ? (
-                  matchedSkills.slice(0, 5).map((skill) => (
-                    <div key={skill.id || skill.name}>
-                      <div className="mb-2 flex justify-between text-xs font-bold uppercase tracking-widest">
-                        <span className="text-zinc-300">{skill.name}</span>
-                        <span className="text-green-500">{skill.level}%</span>
-                      </div>
-                      <Progress value={skill.level} className="h-1 bg-zinc-800" indicatorClassName="bg-green-500" />
-                    </div>
-                  ))
+              <CardContent>
+                {contextMatchedSkills && contextMatchedSkills.length > 0 ? (
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    {contextMatchedSkills.slice(0, 5).map((skill, idx) => {
+                      // Gradient: first skills lean green, later lean cyan
+                      const gradientClass = idx < 2
+                        ? "bg-green-500/10 text-green-400 border-green-500/25"
+                        : idx < 4
+                        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/25"
+                        : "bg-cyan-500/10 text-cyan-400 border-cyan-500/25"
+                      return (
+                        <span
+                          key={skill}
+                          className={`px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider border ${gradientClass} transition-all hover:scale-105`}
+                        >
+                          {skill}
+                        </span>
+                      )
+                    })}
+                  </div>
                 ) : (
-                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest text-center py-8">No matching stats available yet.</p>
+                  <div className="flex flex-col items-center justify-center py-10 text-center gap-3">
+                    <Info className="h-6 w-6 text-zinc-600" />
+                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest max-w-[180px] leading-relaxed">
+                      Upload a resume in the Analyzer to see your top strengths.
+                    </p>
+                  </div>
                 )}
               </CardContent>
             </Card>
 
-            <Card className="border-zinc-800 bg-muted/5 backdrop-blur-sm">
+            {/* Primary Gaps — id for scroll target from Roaster */}
+            <Card id="primary-gaps" className="border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-muted/5 backdrop-blur-sm shadow-sm shadow-blue-500/5 dark:shadow-none">
               <CardHeader>
-                <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-[#22d3ee]">Primary Gaps</CardTitle>
+                <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-cyan-600 dark:text-[#22d3ee]">Primary Gaps</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 {missingSkills.length > 0 ? (
                   missingSkills.slice(0, 5).map((skill) => (
                     <div key={skill.id || skill.name}>
                       <div className="mb-2 flex justify-between text-xs font-bold uppercase tracking-widest">
-                        <span className="text-zinc-300">{skill.name}</span>
+                        <span className="text-zinc-900 dark:text-zinc-300">{skill.name}</span>
                         <span className="text-zinc-500">{skill.weight}% Importance</span>
                       </div>
-                      <Progress value={skill.weight || 20} className="h-1 bg-zinc-800" indicatorClassName="bg-[#22d3ee]" />
+                      <Progress value={skill.weight || 20} className="h-1 bg-zinc-200 dark:bg-zinc-800" indicatorClassName="bg-cyan-500 dark:bg-[#22d3ee]" />
                     </div>
                   ))
                 ) : (
@@ -493,9 +510,9 @@ export default function SkillGapPage() {
         </TabsContent>
 
         <TabsContent value="skills">
-          <Card className="border-zinc-800 bg-muted/5">
+          <Card className="border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-muted/5 shadow-sm shadow-blue-500/5 dark:shadow-none">
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-[#22d3ee]">Skill Repository</CardTitle>
+              <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-cyan-600 dark:text-[#22d3ee]">Skill Repository</CardTitle>
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -511,7 +528,7 @@ export default function SkillGapPage() {
                   <Badge
                     key={skill.id || skill.name}
                     variant="secondary"
-                    className="bg-green-500/10 text-green-500 border border-green-500/20 px-3 py-1 text-[10px] font-bold uppercase tracking-widest"
+                    className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-green-500/10 dark:text-green-500 border dark:border-green-500/20 px-3 py-1 text-[10px] font-bold uppercase tracking-widest"
                   >
                     {skill.name} • {skill.level}%
                   </Badge>
@@ -520,7 +537,7 @@ export default function SkillGapPage() {
                   <Badge
                     key={skill.id || skill.name}
                     variant="secondary"
-                    className="bg-[#22d3ee]/10 text-[#22d3ee] border border-[#22d3ee]/20 px-3 py-1 text-[10px] font-bold uppercase tracking-widest"
+                    className="bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-500/10 dark:text-orange-500 border dark:border-orange-500/20 px-3 py-1 text-[10px] font-bold uppercase tracking-widest"
                   >
                     {skill.name} (GAP)
                   </Badge>
@@ -539,11 +556,11 @@ export default function SkillGapPage() {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: index * 0.05 }}
               >
-                <Card className="border-zinc-800 bg-muted/5 hover:border-[#22d3ee]/30 transition-all group overflow-hidden">
-                  <div className="h-1 w-0 bg-[#22d3ee] group-hover:w-full transition-all duration-500" />
+                <Card className="border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-muted/5 hover:border-cyan-300 dark:hover:border-[#22d3ee]/30 transition-all group overflow-hidden shadow-sm shadow-blue-500/5 dark:shadow-none">
+                  <div className="h-1 w-0 bg-cyan-500 dark:bg-[#22d3ee] group-hover:w-full transition-all duration-500" />
                   <CardContent className="p-5">
-                    <h4 className="font-black text-sm text-zinc-100 uppercase tracking-tight">{skill.name}</h4>
-                    <p className="text-[10px] text-muted-foreground font-bold uppercase mt-1">Recommended addition</p>
+                    <h4 className="font-black text-sm text-zinc-950 dark:text-zinc-100 uppercase tracking-tight">{skill.name}</h4>
+                    <p className="text-[10px] text-zinc-500 dark:text-muted-foreground font-bold uppercase mt-1">Recommended addition</p>
                     <Button
                       variant="ghost"
                       size="sm"
