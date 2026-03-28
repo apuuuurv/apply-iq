@@ -10,26 +10,18 @@ import "./globals.css"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "ApplyIQ - AI Job Application Tracker & Resume Analyzer",
+  title: "ApplyIQ - AI Job Application Tracker",
   description:
     "Track your job applications, analyze your resume with AI, and get hired faster with intelligent insights.",
 
   icons: {
     icon: [
       {
-        url: "/icon-light-32x32.png",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        url: "/icon-dark-32x32.png",
-        media: "(prefers-color-scheme: dark)",
-      },
-      {
         url: "/icon.svg",
         type: "image/svg+xml",
       },
     ],
-    apple: "/apple-icon.png",
+    apple: "/icon.svg",
   },
 }
 
