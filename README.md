@@ -135,4 +135,4 @@ We welcome contributions! Please follow these steps:
 
 ---
 
-Developed with ❤️ by Vaidik, Akshay, and Apurv.
+Developed with ❤️ by Apurv.
