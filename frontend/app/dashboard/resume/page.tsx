@@ -3,6 +3,7 @@
 import React from "react"
 import { useState, useCallback, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { cn } from "@/lib/utils"
 import {
   Upload,
   FileText,
@@ -30,6 +31,11 @@ import {
 } from "@/components/ui/dialog"
 import { useSkillGap } from "@/lib/context/skill-gap-context"
 import {
+  getNotifications,
+  createNotification,
+  type Notification,
+} from "@/lib/supabase/actions/notifications"
+import {
   getResumes,
   createResume,
   deleteResume,
@@ -53,6 +59,7 @@ export default function ResumeAnalyzerPage() {
   
   const [file, setFile] = useState<File | null>(null)
   const [jobDescription, setJobDescription] = useState("")
+  const [isFocused, setIsFocused] = useState(false)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [analysisComplete, setAnalysisComplete] = useState(!!globalMatchScore)
   const [matchScore, setMatchScore] = useState(globalMatchScore || 0)
@@ -70,6 +77,19 @@ export default function ResumeAnalyzerPage() {
   useEffect(() => {
     loadResumes()
   }, [])
+
+  // Load persistent Job Description
+  useEffect(() => {
+    const savedJD = localStorage.getItem("applyiq_current_jd")
+    if (savedJD) {
+      setJobDescription(savedJD)
+    }
+  }, [])
+
+  // Persist Job Description on change
+  useEffect(() => {
+    localStorage.setItem("applyiq_current_jd", jobDescription)
+  }, [jobDescription])
 
   const loadResumes = async () => {
     try {
@@ -107,19 +127,33 @@ export default function ResumeAnalyzerPage() {
     e.preventDefault()
     setIsDragging(false)
     const droppedFile = e.dataTransfer.files[0]
-    if (droppedFile && (droppedFile.type === "application/pdf" || droppedFile.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document")) {
-      setFile(droppedFile)
-      toast.success("Resume uploaded!")
-    } else {
-      toast.error("Please upload a PDF or DOCX file")
+    if (droppedFile) {
+      const fileExt = droppedFile.name.toLowerCase().split(".").pop()
+      const allowedExts = ["pdf", "docx", "doc"]
+      
+      if (allowedExts.includes(fileExt || "")) {
+        setFile(droppedFile)
+        toast.success("Resume uploaded!")
+      } else {
+        toast.error("Unsupported file format. Please use PDF, DOCX, or DOC.")
+      }
     }
   }, [])
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
     if (selectedFile) {
-      setFile(selectedFile)
-      toast.success("Resume uploaded!")
+      const fileExt = selectedFile.name.toLowerCase().split(".").pop()
+      const allowedExts = ["pdf", "docx", "doc"]
+      
+      if (allowedExts.includes(fileExt || "")) {
+        setFile(selectedFile)
+        toast.success("Resume uploaded!")
+      } else {
+        toast.error("Unsupported file format. Please use PDF, DOCX, or DOC.")
+        // Reset the input so the same file can be selected again if fixed
+        e.target.value = ""
+      }
     }
   }
 
@@ -133,8 +167,16 @@ export default function ResumeAnalyzerPage() {
     setMatchScore(0)
 
     try {
+      // 1. AI Analysis
       const result = await analyzeResume(file, jobDescription)
+      
+      if (result.error) {
+        toast.error(result.error, { duration: 6000 })
+        setIsAnalyzing(false)
+        return
+      }
 
+      // 2. Update UI with results
       setMatchedSkills(result.matched_skills)
       setTechMatches(result.tech_stack_matches)
       setSecondaryMatches(result.secondary_matches)
@@ -148,13 +190,14 @@ export default function ResumeAnalyzerPage() {
       }
       setMatchScore(result.match_score)
 
-      // Sync with global state for persistence
+      // 3. Sync with global state
       setGlobalMissingSkills(result.missing_skills)
       setGlobalMatchedSkills(result.matched_skills)
       setGlobalMatchScore(result.match_score)
       setLastAnalysisDate(new Date().toISOString())
+      setAnalysisComplete(true)
 
-      // Save to Supabase
+      // 4. Persistence & Notifications (Non-blocking)
       try {
         await createResume({
           fileName: file.name,
@@ -169,14 +212,21 @@ export default function ResumeAnalyzerPage() {
           matchScore: result.match_score,
         })
         loadResumes()
-      } catch (dbError) {
-        console.error("Save error:", dbError)
+        
+        await createNotification({
+          title: "Resume Analyzed",
+          description: `Analysis complete for ${file.name}. Match score: ${result.match_score}%`,
+          type: "update",
+        })
+      } catch (persistenceError) {
+        console.error("Persistence/Notification error:", persistenceError)
       }
 
-      setAnalysisComplete(true)
       toast.success("Analysis complete!")
+
     } catch (error: any) {
-      toast.error(error.message || "Analysis failed")
+      console.error("Critical Analysis Error:", error)
+      toast.error(error.message || "The system failed to initialize the analysis pipeline.")
     } finally {
       setIsAnalyzing(false)
     }
@@ -206,13 +256,13 @@ export default function ResumeAnalyzerPage() {
         </div>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-[1fr_420px] items-start">
+      <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr] xl:grid-cols-[1fr_400px] items-start">
         {/* Left Column - Results & JD */}
-        <div className="space-y-8">
+        <div className="space-y-6">
           {analysisComplete ? (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
               {/* Score & AI Insight Row */}
-              <div className="grid gap-6 md:grid-cols-[280px_1fr]">
+              <div className="grid gap-6 md:grid-cols-[240px_1fr]">
                 <Card className="border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-black/40 backdrop-blur-xl rounded-2xl overflow-hidden border-t-zinc-200 dark:border-t-zinc-700/50 shadow-sm shadow-blue-500/5 dark:shadow-none">
                   <CardHeader className="pb-2 border-b border-zinc-200 dark:border-zinc-900">
                     <CardTitle className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-cyan-600 dark:text-[#22d3ee]">
@@ -296,27 +346,48 @@ export default function ResumeAnalyzerPage() {
           )}
 
           {/* Job Description Box */}
-          <Card className="border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-black/40 backdrop-blur-xl rounded-2xl border-t-zinc-200 dark:border-t-zinc-700/30 overflow-hidden shadow-sm shadow-blue-500/5 dark:shadow-none">
-            <CardHeader className="pb-4 border-b border-zinc-200 dark:border-zinc-900">
-              <CardTitle className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-500">
-                <Target className="h-4 w-4 text-cyan-500 dark:text-[#22d3ee]" />
-                Job Specification parameters
+          <Card className={cn(
+            "relative border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-black/40 backdrop-blur-xl rounded-2xl border-t-zinc-200 dark:border-t-zinc-700/30 overflow-hidden shadow-sm transition-all duration-500",
+            isFocused ? "shadow-[0_0_40px_rgba(34,211,238,0.1)] ring-1 ring-cyan-500/20 dark:ring-[#22d3ee]/20" : "shadow-blue-500/5 dark:shadow-none"
+          )}>
+            {/* Dynamic Corner Accents */}
+            <div className={cn("absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-cyan-500/5 to-transparent transition-opacity", isFocused ? "opacity-100" : "opacity-0")} />
+            <div className={cn("absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tl from-cyan-500/5 to-transparent transition-opacity", isFocused ? "opacity-100" : "opacity-0")} />
+            
+            <CardHeader className="pb-4 border-b border-zinc-200 dark:border-zinc-900 relative z-10">
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-500">
+                  <Target className={cn("h-4 w-4 transition-colors", isFocused ? "text-cyan-500 dark:text-[#22d3ee]" : "text-zinc-400")} />
+                  Job Specification parameters
+                </div>
+                {jobDescription.length > 0 && (
+                  <Badge variant="outline" className="text-[8px] font-black uppercase border-cyan-500/20 text-cyan-600 dark:text-[#22d3ee] px-2">
+                    {jobDescription.split(/\s+/).filter(Boolean).length} Words
+                  </Badge>
+                )}
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-0">
+            <CardContent className="p-0 relative">
               <Textarea
                 placeholder="PROMPT: Paste Role Requirements Here..."
                 value={jobDescription}
                 onChange={(e) => setJobDescription(e.target.value)}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
                 rows={12}
-                className="resize-none border-none bg-transparent focus-visible:ring-0 rounded-none text-zinc-900 dark:text-zinc-100 font-medium p-8 text-sm leading-relaxed placeholder:text-zinc-500 dark:placeholder:text-zinc-800"
+                className="resize-none border-none bg-transparent focus-visible:ring-0 rounded-none text-zinc-900 dark:text-zinc-100 font-medium p-8 text-sm leading-relaxed placeholder:text-zinc-400 dark:placeholder:text-zinc-500 selection:bg-cyan-500/10"
               />
+              {/* Visual Feedback Line */}
+              <div className={cn(
+                "absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-transparent via-cyan-500 to-transparent transition-all duration-1000",
+                isFocused ? "w-full opacity-100" : "w-0 opacity-0"
+              )} />
             </CardContent>
           </Card>
         </div>
 
         {/* Right Column - Actions & Gaps */}
-        <div className="space-y-8">
+        <div className="space-y-6 lg:sticky lg:top-8">
           {/* Main Action */}
           <Button
             onClick={handleAnalyze}
@@ -386,29 +457,31 @@ export default function ResumeAnalyzerPage() {
                   Critical Skill Discrepancies
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-6 space-y-5">
-                {missingSkills.map((item) => (
-                  <div key={item.skill} className="space-y-3 p-4 rounded-xl bg-zinc-50 dark:bg-black/60 border border-zinc-200 dark:border-zinc-900 group hover:border-zinc-300 dark:hover:border-zinc-800 transition-colors">
-                    <div className="flex items-center justify-between gap-4">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-zinc-800 dark:text-zinc-200 truncate">{item.skill}</span>
-                      <div className="flex shrink-0 gap-2">
-                        <Button 
-                          variant="ghost" size="sm" className="h-7 text-[8px] font-black uppercase tracking-widest px-3 text-zinc-500 dark:text-zinc-600 hover:text-cyan-600 dark:hover:text-[#22d3ee] border border-transparent hover:border-cyan-200 dark:hover:border-[#22d3ee]/20 transition-all"
-                          onClick={() => {
-                            const bullet = `• Engineered advanced workflows using ${item.skill} to optimize critical systems.`
-                            navigator.clipboard.writeText(bullet); toast.success("DATA COPIED");
-                          }}
-                        >
-                          Extract
-                        </Button>
-                        <a href={`https://www.google.com/search?q=${item.skill}`} target="_blank" className="h-7 flex items-center text-[8px] font-black uppercase tracking-widest px-3 text-zinc-500 dark:text-zinc-600 hover:text-orange-600 dark:hover:text-orange-500 border border-transparent hover:border-orange-200 dark:hover:border-orange-500/20 transition-all">
-                          Study
-                        </a>
+              <CardContent className="pt-6">
+                <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 fancy-scrollbar">
+                  {missingSkills.map((item) => (
+                    <div key={item.skill} className="space-y-3 p-4 rounded-xl bg-zinc-50 dark:bg-black/60 border border-zinc-200 dark:border-zinc-900 group hover:border-zinc-300 dark:hover:border-zinc-800 transition-colors">
+                      <div className="flex items-center justify-between gap-4">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-zinc-800 dark:text-zinc-200 truncate">{item.skill}</span>
+                        <div className="flex shrink-0 gap-2">
+                          <Button 
+                            variant="ghost" size="sm" className="h-7 text-[8px] font-black uppercase tracking-widest px-3 text-zinc-500 dark:text-zinc-600 hover:text-cyan-600 dark:hover:text-[#22d3ee] border border-transparent hover:border-cyan-200 dark:hover:border-[#22d3ee]/20 transition-all"
+                            onClick={() => {
+                              const bullet = `• Engineered advanced workflows using ${item.skill} to optimize critical systems.`
+                              navigator.clipboard.writeText(bullet); toast.success("DATA COPIED");
+                            }}
+                          >
+                            Extract
+                          </Button>
+                          <a href={`https://www.google.com/search?q=${item.skill}`} target="_blank" className="h-7 flex items-center text-[8px] font-black uppercase tracking-widest px-3 text-zinc-500 dark:text-zinc-600 hover:text-orange-600 dark:hover:text-orange-500 border border-transparent hover:border-orange-200 dark:hover:border-orange-500/20 transition-all">
+                            Study
+                          </a>
+                        </div>
                       </div>
+                      <Progress value={item.weight} className={`h-1.5 bg-zinc-200 dark:bg-zinc-950 ${item.is_critical ? "[&>div]:bg-orange-500 dark:[&>div]:bg-orange-600 dark:shadow-[0_0_15px_rgba(234,88,12,0.4)]" : "[&>div]:bg-zinc-400 dark:[&>div]:bg-zinc-800"}`} />
                     </div>
-                    <Progress value={item.weight} className={`h-1.5 bg-zinc-200 dark:bg-zinc-950 ${item.is_critical ? "[&>div]:bg-orange-500 dark:[&>div]:bg-orange-600 dark:shadow-[0_0_15px_rgba(234,88,12,0.4)]" : "[&>div]:bg-zinc-400 dark:[&>div]:bg-zinc-800"}`} />
-                  </div>
-                ))}
+                  ))}
+                </div>
               </CardContent>
             </Card>
           )}
@@ -451,11 +524,21 @@ export default function ResumeAnalyzerPage() {
                     className="w-full text-[9px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-white bg-zinc-100 dark:bg-zinc-900/50"
                     onClick={() => {
                         window.scrollTo({ top: 0, behavior: "smooth" })
-                        setMatchScore(resData?.matchScore || 0)
-                        setTechMatches(resData?.matchedSkills || [])
-                        setMissingSkills(resData?.missingSkills || [])
+                        const matchScoreValue = resData?.matchScore || 0
+                        const matchedSkillsValue = resData?.matchedSkills || []
+                        const missingSkillsValue = resData?.missingSkills || []
+                        
+                        setMatchScore(matchScoreValue)
+                        setTechMatches(matchedSkillsValue)
+                        setMissingSkills(missingSkillsValue)
                         setGapSummary(resData?.gapSummary || "")
                         setAnalysisComplete(true)
+                        
+                        // Sync with global state for Resume Roaster
+                        setGlobalMatchScore(matchScoreValue)
+                        setGlobalMatchedSkills(matchedSkillsValue)
+                        setGlobalMissingSkills(missingSkillsValue)
+                        setLastAnalysisDate(resume.created_at || new Date().toISOString())
                     }}
                   >
                     View report

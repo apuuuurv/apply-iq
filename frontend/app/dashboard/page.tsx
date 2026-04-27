@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
+import { cn } from "@/lib/utils"
 import {
   Briefcase,
   TrendingUp,
@@ -168,7 +169,7 @@ export default function DashboardPage() {
   const recentApplications = applications.length > 0 ? applications : mockApplications.slice(0, 5)
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 max-w-[1400px] mx-auto pb-12">
       {/* Page Header */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl text-zinc-950 dark:text-zinc-100">
@@ -180,7 +181,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {displayStats.map((stat, index) => (
           <motion.div
             key={stat.name}
@@ -227,40 +228,39 @@ export default function DashboardPage() {
           transition={{ duration: 0.3, delay: 0.4 }}
         >
           <Card className="bg-white/80 dark:bg-card backdrop-blur-md border-zinc-200 dark:border-border shadow-sm shadow-blue-500/5 dark:shadow-none">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Recent Applications</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between pb-4 border-b border-zinc-200 dark:border-zinc-900">
+              <CardTitle className="text-sm font-black uppercase tracking-widest text-zinc-950 dark:text-zinc-100">Recent Applications</CardTitle>
               <Link href="/dashboard/applications">
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" className="text-[10px] font-black uppercase tracking-widest text-cyan-600 dark:text-[#22d3ee]">
                   View all
                 </Button>
               </Link>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+            <CardContent className="pt-6">
+              <div className="space-y-6">
                 {recentApplications.map((application) => (
                   <div
                     key={application.id}
-                    className="flex items-center justify-between gap-4"
+                    className="flex items-center justify-between gap-4 group"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted text-sm font-semibold">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-900 text-sm font-black text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-800 group-hover:border-cyan-500/50 dark:group-hover:border-[#22d3ee]/50 transition-colors">
                         {application.company.charAt(0)}
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-zinc-950 dark:text-zinc-100">
+                        <p className="text-sm font-black text-zinc-950 dark:text-zinc-100 uppercase tracking-tight">
                           {application.company}
                         </p>
-                        <p className="text-xs text-zinc-500 dark:text-muted-foreground">
+                        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
                           {application.role}
                         </p>
                       </div>
                     </div>
                     <Badge
                       variant="secondary"
-                      className={statusColors[application.status]}
+                      className={cn("text-[9px] font-black uppercase tracking-widest px-2", statusColors[application.status])}
                     >
-                      {application.status.charAt(0).toUpperCase() +
-                        application.status.slice(1)}
+                      {application.status}
                     </Badge>
                   </div>
                 ))}
@@ -276,15 +276,15 @@ export default function DashboardPage() {
           transition={{ duration: 0.3, delay: 0.5 }}
         >
           <Card className="bg-white/80 dark:bg-card backdrop-blur-md border-zinc-200 dark:border-border shadow-sm shadow-blue-500/5 dark:shadow-none">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Resume Match Score</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between pb-4 border-b border-zinc-200 dark:border-zinc-900">
+              <CardTitle className="text-sm font-black uppercase tracking-widest text-zinc-950 dark:text-zinc-100">Resume Match Score</CardTitle>
               <Link href="/dashboard/resume">
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" className="text-[10px] font-black uppercase tracking-widest text-cyan-600 dark:text-[#22d3ee]">
                   Analyze
                 </Button>
               </Link>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="pt-6 space-y-6">
               <div className="text-center">
                 <div className="relative mx-auto h-32 w-32">
                   <svg className="h-full w-full -rotate-90" viewBox="0 0 100 100">
@@ -297,7 +297,7 @@ export default function DashboardPage() {
                       cy="50"
                     />
                     <circle
-                      className="stroke-cyan-500 dark:stroke-accent transition-all duration-1000"
+                      className="stroke-cyan-500 dark:stroke-cyan-400 transition-all duration-1000"
                       strokeWidth="10"
                       fill="none"
                       r="40"

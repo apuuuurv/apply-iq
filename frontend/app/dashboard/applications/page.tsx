@@ -54,6 +54,7 @@ import {
   deleteJobApplication,
   type JobApplication,
 } from "@/lib/supabase/actions/applications"
+import { createNotification } from "@/lib/supabase/actions/notifications"
 
 type ApplicationStatus = "applied" | "interview" | "offer" | "rejected"
 
@@ -149,6 +150,18 @@ export default function ApplicationsPage() {
       setIsAddModalOpen(false)
       resetForm()
       toast.success("Application added successfully!")
+      
+      // Create notification
+      try {
+        await createNotification({
+          title: "New Application Added",
+          description: `Applied to ${formData.company} as ${formData.role}`,
+          type: "update",
+        })
+      } catch (notifError) {
+        console.error("Error creating notification:", notifError)
+      }
+      
       await loadApplications()
     } catch (error) {
       console.error("Error adding application:", error)
@@ -244,9 +257,46 @@ export default function ApplicationsPage() {
     try {
       await updateJobApplication(id, { status: newStatus })
       toast.success(`Moved to ${newStatus}`)
+      
+      // Create notification
+      const app = applications.find(a => a.id === id)
+      if (app) {
+        try {
+          await createNotification({
+            title: "Application Updated",
+            description: `Moved ${app.company} application to ${newStatus}`,
+            type: newStatus === "interview" ? "interview" : "update",
+          })
+        } catch (notifError) {
+          console.error("Error creating notification:", notifError)
+        }
+      }
+      
       await loadApplications()
     } catch (error) {
       toast.error("Failed to update status")
+    }
+  }
+
+  // Drag and Drop Handlers
+  const onDragStart = (e: React.DragEvent, id: string) => {
+    e.dataTransfer.setData("applicationId", id)
+    e.dataTransfer.effectAllowed = "move"
+  }
+
+  const onDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = "move"
+  }
+
+  const onDrop = async (e: React.DragEvent, status: ApplicationStatus) => {
+    e.preventDefault()
+    const id = e.dataTransfer.getData("applicationId")
+    if (id) {
+      const app = applications.find(a => a.id === id)
+      if (app && app.status !== status) {
+        await handleStatusChange(id, status)
+      }
     }
   }
 
@@ -297,22 +347,26 @@ export default function ApplicationsPage() {
           return (
             <div key={column.id} className="flex flex-col gap-4 min-h-[500px]">
               {/* Column Header */}
-              <div className="flex items-center justify-between px-2 pb-2 border-b border-zinc-800/50">
+              <div className="flex items-center justify-between px-2 pb-2 border-b border-zinc-200 dark:border-zinc-800/50">
                 <div className="flex items-center gap-2">
-                  <div className={cn("p-1.5 rounded-lg bg-zinc-900 border border-zinc-800", column.color)}>
+                  <div className={cn("p-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800", column.color)}>
                     <column.icon className="h-4 w-4" />
                   </div>
-                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
                     {column.label}
                   </h3>
                 </div>
-                <Badge variant="outline" className="text-[9px] font-black border-zinc-800 text-zinc-500">
+                <Badge variant="outline" className="text-[9px] font-black border-zinc-200 dark:border-zinc-800 text-zinc-400 dark:text-zinc-500">
                   {columnApps.length}
                 </Badge>
               </div>
 
               {/* Column Content */}
-              <div className="flex-1 space-y-4 rounded-2xl bg-muted/5 p-2 min-h-[200px] border border-zinc-800/20">
+              <div 
+                className="flex-1 space-y-4 rounded-2xl bg-zinc-50/50 dark:bg-muted/5 p-2 min-h-[200px] border border-zinc-200 dark:border-zinc-800/20"
+                onDragOver={onDragOver}
+                onDrop={(e) => onDrop(e, column.id)}
+              >
                 <AnimatePresence mode="popLayout">
                   {columnApps.map((app, idx) => (
                     <motion.div
@@ -322,16 +376,18 @@ export default function ApplicationsPage() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.95 }}
                       transition={{ duration: 0.2, delay: idx * 0.05 }}
+                      draggable
+                      onDragStart={(e) => onDragStart(e, app.id!)}
                     >
-                      <Card className="group border-zinc-800 bg-zinc-950/40 backdrop-blur-sm hover:border-[#22d3ee]/30 transition-all cursor-grab active:cursor-grabbing overflow-hidden">
+                      <Card className="group border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950/40 backdrop-blur-sm hover:border-cyan-500/30 dark:hover:border-[#22d3ee]/30 transition-all cursor-grab active:cursor-grabbing overflow-hidden shadow-sm dark:shadow-none">
                         <CardContent className="p-4 space-y-4">
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex items-center gap-3 min-w-0">
-                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-zinc-900 border border-zinc-800 text-sm font-black text-zinc-100 group-hover:border-[#22d3ee]/50 transition-colors">
+                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm font-black text-zinc-900 dark:text-zinc-100 group-hover:border-cyan-500/50 dark:group-hover:border-[#22d3ee]/50 transition-colors">
                                 {app.company.charAt(0)}
                               </div>
                               <div className="min-w-0">
-                                <h4 className="truncate font-black text-sm text-zinc-100 uppercase tracking-tight">
+                                <h4 className="truncate font-black text-sm text-zinc-950 dark:text-zinc-100 uppercase tracking-tight">
                                   {app.company}
                                 </h4>
                                 <p className="truncate text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
@@ -342,18 +398,18 @@ export default function ApplicationsPage() {
                             
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-500 hover:text-white">
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-zinc-950 dark:text-zinc-500 dark:hover:text-white">
                                   <MoreHorizontal className="h-4 w-4" />
                                 </Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="bg-zinc-950 border-zinc-800">
+                              <DropdownMenuContent align="end" className="bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800">
                                 <DropdownMenuItem onClick={() => openEditModal(app)} className="text-[10px] font-black uppercase tracking-widest">
                                   <Pencil className="mr-2 h-3.5 w-3.5" /> EDIT
                                 </DropdownMenuItem>
                                 <DropdownMenuItem className="text-[10px] font-black uppercase tracking-widest">
                                   <ExternalLink className="mr-2 h-3.5 w-3.5" /> DETAILS
                                 </DropdownMenuItem>
-                                <DropdownMenuSeparator className="bg-zinc-800" />
+                                <DropdownMenuSeparator className="bg-zinc-100 dark:bg-zinc-800" />
                                 <DropdownMenuItem 
                                   onClick={() => openDeleteModal(app)}
                                   className="text-[10px] font-black uppercase tracking-widest text-red-500"
@@ -382,9 +438,10 @@ export default function ApplicationsPage() {
                                 return (
                                   <div className="relative h-10 w-10 shrink-0">
                                     <svg className="h-full w-full -rotate-90">
-                                      <circle cx="20" cy="20" r="16" fill="none" stroke="#27272a" strokeWidth="3" />
+                                      <circle cx="20" cy="20" r="16" fill="none" stroke="#27272a" strokeWidth="3" className="stroke-zinc-200 dark:stroke-zinc-800" />
                                       <motion.circle
-                                        cx="20" cy="20" r="16" fill="none" stroke="#22d3ee" strokeWidth="3"
+                                        cx="20" cy="20" r="16" fill="none" stroke="currentColor" strokeWidth="3"
+                                        className="text-cyan-500 dark:text-[#22d3ee]"
                                         strokeDasharray="100.53"
                                         initial={{ strokeDashoffset: 100.53 }}
                                         animate={{ strokeDashoffset: 100.53 - (100.53 * score) / 100 }}
@@ -392,14 +449,14 @@ export default function ApplicationsPage() {
                                         strokeLinecap="round"
                                       />
                                     </svg>
-                                    <div className="absolute inset-0 flex items-center justify-center text-[10px] font-black text-[#22d3ee]">
+                                    <div className="absolute inset-0 flex items-center justify-center text-[10px] font-black text-cyan-600 dark:text-[#22d3ee]">
                                       {score}
                                     </div>
                                   </div>
                                 )
                               }
                               return (
-                                <Badge variant="outline" className="text-[8px] font-black border-zinc-800 text-zinc-500 uppercase tracking-tighter">
+                                <Badge variant="outline" className="text-[8px] font-black border-zinc-200 dark:border-zinc-800 text-zinc-400 dark:text-zinc-500 uppercase tracking-tighter">
                                   NO SCORE
                                 </Badge>
                               )
@@ -414,7 +471,7 @@ export default function ApplicationsPage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleStatusChange(app.id!, c.id)}
-                                className="h-6 flex-1 text-[8px] font-black border-zinc-800 hover:border-[#22d3ee]/50 text-zinc-500 hover:text-[#22d3ee] uppercase tracking-tighter transition-all"
+                                className="h-6 flex-1 text-[8px] font-black border-zinc-200 dark:border-zinc-800 hover:border-cyan-500/50 dark:hover:border-[#22d3ee]/50 text-zinc-400 dark:text-zinc-500 hover:text-cyan-600 dark:hover:text-[#22d3ee] uppercase tracking-tighter transition-all"
                               >
                                 TO {c.label}
                               </Button>
@@ -449,9 +506,9 @@ export default function ApplicationsPage() {
           }
         }}
       >
-        <DialogContent className="sm:max-w-[500px] bg-zinc-950 border-zinc-800 text-zinc-100">
+        <DialogContent className="sm:max-w-[500px] bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-950 dark:text-zinc-100">
           <DialogHeader>
-            <DialogTitle className="text-sm font-black uppercase tracking-widest text-[#22d3ee]">
+            <DialogTitle className="text-sm font-black uppercase tracking-widest text-cyan-600 dark:text-[#22d3ee]">
               {isEditModalOpen ? "Modify Application" : "Initiate New Pipeline"}
             </DialogTitle>
           </DialogHeader>
@@ -462,7 +519,7 @@ export default function ApplicationsPage() {
                 placeholder="E.G. NVIDIA, SPACEX, OPENAI..."
                 value={formData.company}
                 onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                className="bg-black border-zinc-800 text-zinc-100 focus-visible:ring-[#22d3ee] rounded-xl h-11 uppercase"
+                className="bg-zinc-50 dark:bg-black border-zinc-200 dark:border-zinc-800 text-zinc-950 dark:text-zinc-100 focus-visible:ring-cyan-500 dark:focus-visible:ring-[#22d3ee] rounded-xl h-11 uppercase"
               />
             </div>
             <div className="grid gap-2">
@@ -471,7 +528,7 @@ export default function ApplicationsPage() {
                 placeholder="E.G. QUANTUM ENGINEER, AI ARCHITECT..."
                 value={formData.role}
                 onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                className="bg-black border-zinc-800 text-zinc-100 focus-visible:ring-[#22d3ee] rounded-xl h-11 uppercase"
+                className="bg-zinc-50 dark:bg-black border-zinc-200 dark:border-zinc-800 text-zinc-950 dark:text-zinc-100 focus-visible:ring-cyan-500 dark:focus-visible:ring-[#22d3ee] rounded-xl h-11 uppercase"
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -481,7 +538,7 @@ export default function ApplicationsPage() {
                   placeholder="REMOTE / GLOBAL..."
                   value={formData.location}
                   onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  className="bg-black border-zinc-800 text-zinc-100 h-11 rounded-xl uppercase"
+                  className="bg-zinc-50 dark:bg-black border-zinc-200 dark:border-zinc-800 text-zinc-950 dark:text-zinc-100 h-11 rounded-xl uppercase"
                 />
               </div>
               <div className="grid gap-2">
@@ -490,7 +547,7 @@ export default function ApplicationsPage() {
                   placeholder="CONTRACT / ANNUAL..."
                   value={formData.salary}
                   onChange={(e) => setFormData({ ...formData, salary: e.target.value })}
-                  className="bg-black border-zinc-800 text-zinc-100 h-11 rounded-xl uppercase"
+                  className="bg-zinc-50 dark:bg-black border-zinc-200 dark:border-zinc-800 text-zinc-950 dark:text-zinc-100 h-11 rounded-xl uppercase"
                 />
               </div>
             </div>
@@ -501,10 +558,10 @@ export default function ApplicationsPage() {
                   value={formData.status}
                   onValueChange={(value) => setFormData({ ...formData, status: value as ApplicationStatus })}
                 >
-                  <SelectTrigger className="bg-black border-zinc-800 h-11 rounded-xl uppercase font-black text-[10px] tracking-widest">
+                  <SelectTrigger className="bg-zinc-50 dark:bg-black border-zinc-200 dark:border-zinc-800 h-11 rounded-xl uppercase font-black text-[10px] tracking-widest">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-zinc-950 border-zinc-800">
+                  <SelectContent className="bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800">
                     {statusOptions.map((option) => (
                       <SelectItem key={option.value} value={option.value} className="text-[10px] font-black uppercase tracking-widest">
                         {option.label}
@@ -522,7 +579,7 @@ export default function ApplicationsPage() {
                   placeholder="0 - 100"
                   value={formData.match_score || ""}
                   onChange={(e) => setFormData({ ...formData, match_score: parseInt(e.target.value) || 0 })}
-                  className="bg-black border-zinc-800 text-zinc-100 h-11 rounded-xl"
+                  className="bg-zinc-50 dark:bg-black border-zinc-200 dark:border-zinc-800 text-zinc-950 dark:text-zinc-100 h-11 rounded-xl"
                 />
               </div>
             </div>
@@ -542,7 +599,7 @@ export default function ApplicationsPage() {
             <Button
               onClick={isEditModalOpen ? handleEditApplication : handleAddApplication}
               disabled={!formData.company || !formData.role}
-              className="bg-[#22d3ee] text-zinc-950 font-black uppercase tracking-widest px-8 rounded-xl"
+              className="bg-cyan-500 dark:bg-[#22d3ee] text-white dark:text-zinc-950 font-black uppercase tracking-widest px-8 rounded-xl"
             >
               {isEditModalOpen ? "Commit Changes" : "Deploy Pipeline"}
             </Button>
@@ -552,11 +609,11 @@ export default function ApplicationsPage() {
 
       {/* Delete Confirmation Modal */}
       <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
-        <DialogContent className="sm:max-w-[400px] bg-zinc-950 border-zinc-800">
+        <DialogContent className="sm:max-w-[400px] bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800">
           <DialogHeader>
-            <DialogTitle className="text-[#22d3ee] font-black uppercase tracking-widest">Confirm Deletion</DialogTitle>
-            <DialogDescription className="text-zinc-400 text-xs font-bold uppercase tracking-widest pt-2">
-              Permanently remove <span className="text-white italic">{selectedApplication?.company}</span> from tracker?
+            <DialogTitle className="text-cyan-600 dark:text-[#22d3ee] font-black uppercase tracking-widest">Confirm Deletion</DialogTitle>
+            <DialogDescription className="text-zinc-500 dark:text-zinc-400 text-xs font-bold uppercase tracking-widest pt-2">
+              Permanently remove <span className="text-zinc-900 dark:text-white italic">{selectedApplication?.company}</span> from tracker?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="mt-4">

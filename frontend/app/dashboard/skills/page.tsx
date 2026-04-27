@@ -64,6 +64,64 @@ const priorityColors: Record<string, string> = {
   Low: "bg-muted text-muted-foreground",
 }
 
+// Logical educational roadmap order
+const ROADMAP_PRIORITY: Record<string, number> = {
+  // Foundations
+  "html": 1,
+  "css": 2,
+  "javascript": 3,
+  "typescript": 4,
+  "sql": 5,
+  // Languages
+  "python": 10,
+  "java": 11,
+  "c++": 12,
+  "c#": 13,
+  "ruby": 14,
+  "php": 15,
+  "go": 16,
+  "rust": 17,
+  // Frameworks/Libraries
+  "react": 20,
+  "node.js": 21,
+  "express": 22,
+  "next.js": 23,
+  "spring": 24,
+  "django": 25,
+  "flask": 26,
+  "angular": 27,
+  "vue": 28,
+  // Databases/Tools
+  "mongodb": 30,
+  "postgresql": 31,
+  "mysql": 32,
+  "redis": 33,
+  "git": 40,
+  "docker": 41,
+  "kubernetes": 42,
+  "aws": 43,
+  "azure": 44,
+  "google cloud": 45,
+  "terraform": 46,
+  // Soft Skills/Methodology
+  "agile": 50,
+  "scrum": 51,
+  "system design": 60,
+}
+
+const getSkillPriority = (name: string): number => {
+  const normalized = name.toLowerCase().trim()
+  // Check for exact matches
+  if (ROADMAP_PRIORITY[normalized]) return ROADMAP_PRIORITY[normalized]
+  
+  // Check for partial matches
+  for (const [key, value] of Object.entries(ROADMAP_PRIORITY)) {
+    if (normalized.includes(key)) return value
+  }
+  
+  return 100 // Default for unknown skills
+}
+
 export default function SkillGapPage() {
   const { missingSkills: contextMissingSkills, matchedSkills: contextMatchedSkills, matchScore: contextMatchScore, lastAnalysisDate } = useSkillGap()
   const [selectedTab, setSelectedTab] = useState("overview")
@@ -106,15 +164,18 @@ export default function SkillGapPage() {
       
       // Load missing skills from context primarily
       if (contextMissingSkills.length > 0) {
-        setMissingSkills(contextMissingSkills.map(s => ({ 
-          name: s.skill, 
-          level: 0, 
-          weight: s.weight, 
-          is_critical: s.is_critical 
-        })))
+        const sortedMissing = [...contextMissingSkills]
+          .sort((a, b) => getSkillPriority(a.skill) - getSkillPriority(b.skill))
+          .map(s => ({ 
+            name: s.skill, 
+            level: 0, 
+            weight: s.weight, 
+            is_critical: s.is_critical 
+          }))
+        setMissingSkills(sortedMissing)
       } else {
         const missing = await getSkillsByCategory('missing')
-        setMissingSkills(missing || [])
+        setMissingSkills((missing || []).sort((a: any, b: any) => getSkillPriority(a.name) - getSkillPriority(b.name)))
       }
       
       // Load suggested skills
@@ -160,7 +221,10 @@ export default function SkillGapPage() {
       
       // Update skills from analysis
       setMatchedSkills(result.matchedSkills.map((s: string) => ({ name: s, level: 90 })))
-      setMissingSkills(result.missingSkills.map((s: string) => ({ name: s, level: 0 })))
+      setMissingSkills(result.missingSkills
+        .map((s: string) => ({ name: s, level: 0 }))
+        .sort((a: any, b: any) => getSkillPriority(a.name) - getSkillPriority(b.name))
+      )
       setSuggestedSkills(result.suggestedSkills.map((s: string) => ({ name: s, level: 0 })))
       
       toast.success('Skill gap analysis completed!')
@@ -209,7 +273,7 @@ export default function SkillGapPage() {
   }
 
   return (
-    <div className="space-y-8 max-w-[1200px] mx-auto pb-12">
+    <div className="space-y-6 max-w-[1400px] mx-auto pb-12">
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
@@ -232,10 +296,10 @@ export default function SkillGapPage() {
       </div>
 
       {/* Main Analysis Section */}
-      <div className="grid gap-8 lg:grid-cols-[1fr_450px]">
-        <div className="space-y-8">
+      <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr] xl:grid-cols-[1fr_400px] items-start">
+        <div className="space-y-6">
           {/* Stats Bar */}
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-3">
             {[
               { label: "Matched", value: matchedSkills.length, icon: CheckCircle2, color: "text-green-500", bg: "bg-green-500/10" },
               { label: "Gaps", value: missingSkills.length, icon: AlertTriangle, color: "text-amber-500", bg: "bg-amber-500/10" },
@@ -352,8 +416,8 @@ export default function SkillGapPage() {
         </div>
 
         {/* Roadmap Timeline */}
-        <div className="space-y-8">
-          <Card className="border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-muted/5 backdrop-blur-md h-full sticky top-8 shadow-sm shadow-blue-500/5 dark:shadow-none">
+        <div className="space-y-6 lg:sticky lg:top-8">
+          <Card className="border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-muted/5 backdrop-blur-md h-full shadow-sm shadow-blue-500/5 dark:shadow-none">
             <CardHeader className="pb-4 border-b border-zinc-200 dark:border-zinc-800/50 bg-zinc-50 dark:bg-zinc-950/20">
               <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-600 dark:text-[#22d3ee] flex items-center gap-2">
                 <Zap className="h-3 w-3 fill-cyan-600 dark:fill-[#22d3ee]" />
@@ -361,6 +425,7 @@ export default function SkillGapPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-8">
+              <div className="max-h-[600px] overflow-y-auto pr-2 fancy-scrollbar">
               {missingSkills.length > 0 ? (
                 <div className="relative space-y-10 before:absolute before:left-[17px] before:top-2 before:h-[calc(100%-16px)] before:w-0.5 before:bg-gradient-to-b before:from-cyan-300 dark:before:from-[#22d3ee]/40 before:to-transparent">
                   {missingSkills.map((skill, idx) => (
@@ -428,6 +493,7 @@ export default function SkillGapPage() {
                   </p>
                 </div>
               )}
+              </div>
             </CardContent>
           </Card>
         </div>

@@ -11,6 +11,7 @@ import { useSkillGap } from "@/lib/context/skill-gap-context"
 import { toast } from "sonner"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { createNotification } from "@/lib/supabase/actions/notifications"
 
 // -------------------------------------------------------------------
 // DYNAMIC ROAST ENGINE (3 Paragraphs)
@@ -235,7 +236,7 @@ export default function ResumeRoasterPage() {
     setHasRoast(false)
     setRoasts({})
 
-    setTimeout(() => {
+    setTimeout(async () => {
       const role = targetRole.trim() || "Software Engineer" // Fallback if empty
       const newRoasts = {
         recruiter: PERSONALITIES.recruiter.generate(safeScore, missingSkills || [], matchedSkills || [], role),
@@ -248,6 +249,17 @@ export default function ResumeRoasterPage() {
       
       // Persist to localStorage including the date to manage staleness
       localStorage.setItem("currentRoast", JSON.stringify(newRoasts))
+      // Create notification
+      try {
+        await createNotification({
+          title: "Resume Roasted",
+          description: `Your resume was roasted for the ${role} role. Burn Level: ${burnLevel}%`,
+          type: "suggestion",
+        })
+      } catch (notifError) {
+        console.error("Error creating notification:", notifError)
+      }
+
       if (lastAnalysisDate) {
         localStorage.setItem("applyiq_roast_date", lastAnalysisDate)
       }
@@ -277,7 +289,7 @@ export default function ResumeRoasterPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-[1200px] mx-auto p-4 md:p-8">
+    <div className="space-y-6 max-w-[1400px] mx-auto pb-12">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
@@ -293,7 +305,7 @@ export default function ResumeRoasterPage() {
         </div>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-[1fr_380px] items-start">
+      <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr] xl:grid-cols-[1fr_400px] items-start">
         {/* LEFT — The Oven */}
         <div className="space-y-6">
           <Card
@@ -451,7 +463,7 @@ export default function ResumeRoasterPage() {
         </div>
 
         {/* RIGHT — Burn Meter + Missing Skills */}
-        <div className="space-y-6">
+        <div className="space-y-6 lg:sticky lg:top-8">
           {/* Burn Meter */}
           <Card className="border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-black/40 backdrop-blur-xl rounded-2xl overflow-hidden shadow-sm shadow-blue-500/5 dark:shadow-none">
             <CardHeader className="pb-2 border-b border-zinc-200 dark:border-zinc-900">

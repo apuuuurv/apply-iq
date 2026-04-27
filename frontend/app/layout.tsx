@@ -3,7 +3,8 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { ThemeProvider } from "@/components/theme-provider"
-import { Toaster } from "@/components/ui/toaster"
+import { Toaster as ShadcnToaster } from "@/components/ui/toaster"
+import { Toaster as SonnerToaster } from "sonner"
 import { Preloader } from "@/components/preloader"
 import "./globals.css"
 
@@ -41,7 +42,8 @@ export default function RootLayout({
         >
           <Preloader />
           {children}
-          <Toaster />
+          <ShadcnToaster />
+          <SonnerToaster position="top-center" richColors />
         </ThemeProvider>
         <Analytics />
       </body>

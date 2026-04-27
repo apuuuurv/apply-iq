@@ -69,20 +69,21 @@ export async function analyzeResume(
     })
 
     // Handle response
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      const errorMessage =
-        errorData.detail ||
-        errorData.error ||
-        `Server error: ${response.status}`
-      throw new Error(errorMessage)
-    }
-
     const result: AnalysisResponse = await response.json()
     return result
-  } catch (error) {
+  } catch (error: any) {
     console.error("Resume analysis error:", error)
-    throw error
+    return {
+      match_score: 0,
+      resume_skills: [],
+      jd_skills: [],
+      matched_skills: [],
+      tech_stack_matches: [],
+      secondary_matches: [],
+      missing_skills: [],
+      skill_gap_summary: "",
+      error: error.message || "An unexpected error occurred during analysis."
+    }
   }
 }
 

@@ -19,6 +19,7 @@ import Link from "next/link"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+import { getNotifications, type Notification } from "@/lib/supabase/actions/notifications"
 
 interface DashboardHeaderProps {
   onMenuClick: () => void
@@ -30,6 +31,8 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -65,6 +68,22 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
     }
 
     fetchUserData()
+
+    const fetchNotifications = async () => {
+      try {
+        const data = await getNotifications()
+        setNotifications(data.slice(0, 5)) // Show only top 5
+        setUnreadCount(data.filter(n => !n.is_read).length)
+      } catch (error) {
+        console.error('Error fetching notifications:', error)
+      }
+    }
+
+    fetchNotifications()
+    
+    // Refresh notifications every 30 seconds
+    const interval = setInterval(fetchNotifications, 30000)
+    return () => clearInterval(interval)
   }, [supabase])
 
   const handleLogout = async () => {
@@ -115,40 +134,47 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="relative">
               <Bell className="h-5 w-5" />
-              <Badge className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-xs">
-                3
-              </Badge>
+              {unreadCount > 0 && (
+                <Badge className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center bg-cyan-500 hover:bg-cyan-600">
+                  {unreadCount}
+                </Badge>
+              )}
               <span className="sr-only">Notifications</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-80">
-            <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+            <DropdownMenuLabel className="flex items-center justify-between">
+              <span>Notifications</span>
+              {unreadCount > 0 && (
+                <span className="text-[10px] font-normal text-muted-foreground uppercase tracking-widest">{unreadCount} New</span>
+              )}
+            </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <div className="max-h-80 overflow-y-auto">
-              <DropdownMenuItem className="cursor-pointer">
-                <div className="flex flex-col gap-1">
-                  <p className="text-sm font-medium">Interview Scheduled</p>
-                  <p className="text-xs text-muted-foreground">
-                    Google interview on Jan 20th at 2:00 PM
-                  </p>
+              {notifications.length > 0 ? (
+                notifications.map((notification) => (
+                  <DropdownMenuItem key={notification.id} className="cursor-pointer p-4 focus:bg-muted/50">
+                    <div className="flex flex-col gap-1 w-full">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className={`text-sm font-semibold ${!notification.is_read ? "text-cyan-600 dark:text-cyan-400" : ""}`}>
+                          {notification.title}
+                        </p>
+                        {!notification.is_read && (
+                          <div className="h-1.5 w-1.5 rounded-full bg-cyan-500 mt-1.5" />
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground line-clamp-2">
+                        {notification.description}
+                      </p>
+                    </div>
+                  </DropdownMenuItem>
+                ))
+              ) : (
+                <div className="py-8 text-center">
+                  <Bell className="mx-auto h-8 w-8 text-muted-foreground/20 mb-2" />
+                  <p className="text-xs text-muted-foreground uppercase tracking-widest font-bold">No active notifications</p>
                 </div>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer">
-                <div className="flex flex-col gap-1">
-                  <p className="text-sm font-medium">Resume Suggestion</p>
-                  <p className="text-xs text-muted-foreground">
-                    Add quantifiable achievements to strengthen your application
-                  </p>
-                </div>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer">
-                <div className="flex flex-col gap-1">
-                  <p className="text-sm font-medium">Follow-up Reminder</p>
-                  <p className="text-xs text-muted-foreground">
-                    Consider following up with Stripe
-                  </p>
-                </div>
-              </DropdownMenuItem>
+              )}
             </div>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>

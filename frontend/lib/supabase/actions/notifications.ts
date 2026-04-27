@@ -8,7 +8,7 @@ export interface Notification {
   title: string
   description?: string
   type: 'interview' | 'suggestion' | 'reminder' | 'update'
-  isRead?: boolean
+  is_read?: boolean
 }
 
 // Get all notifications for the current user
