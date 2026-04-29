@@ -30,8 +30,8 @@ export async function syncResumeSkillsToProfile(resumeText: string) {
     // Add new skills that don't exist
     for (const skill of allExtractedSkills) {
       if (!existingSkillNames.includes(skill.toLowerCase())) {
-        // Determine proficiency level based on skill type
-        const proficiencyLevel = technical.includes(skill) ? 70 : 80
+        // Determine proficiency level based on skill type (1-5 range)
+        const proficiencyLevel = technical.includes(skill) ? 4 : 5
 
         await createSkill({
           name: skill,

@@ -56,6 +56,7 @@ import {
 } from "@/lib/supabase/actions/skill-gap"
 import { getUserResumeSkills } from "@/lib/supabase/actions/resume-skills-integration"
 import { useSkillGap } from "@/lib/context/skill-gap-context"
+import { percentToLevel, levelToPercent } from "@/lib/utils/skill-mapping"
 
 // Color mappings for priority badges
 const priorityColors: Record<string, string> = {
@@ -202,7 +203,7 @@ export default function SkillGapPage() {
 
   // Radar chart data
   const radarData = [
-    ...(matchedSkills.slice(0, 5).map(s => ({ subject: s.name, target: 100, current: s.level || 80 }))),
+    ...(matchedSkills.slice(0, 5).map(s => ({ subject: s.name, target: 100, current: levelToPercent(s.level) || 80 }))),
     ...(missingSkills.slice(0, 3).map(s => ({ subject: s.name, target: 100, current: 20 })))
   ].slice(0, 8)
 
@@ -220,7 +221,7 @@ export default function SkillGapPage() {
       setOverallScore(result.overallScore)
       
       // Update skills from analysis
-      setMatchedSkills(result.matchedSkills.map((s: string) => ({ name: s, level: 90 })))
+      setMatchedSkills(result.matchedSkills.map((s: string) => ({ name: s, level: 5 })))
       setMissingSkills(result.missingSkills
         .map((s: string) => ({ name: s, level: 0 }))
         .sort((a: any, b: any) => getSkillPriority(a.name) - getSkillPriority(b.name))
@@ -246,7 +247,7 @@ export default function SkillGapPage() {
     try {
       await createSkill({
         name: skillName,
-        level: skillLevel,
+        level: percentToLevel(skillLevel),
         category: 'matched',
       })
       
@@ -596,7 +597,7 @@ export default function SkillGapPage() {
                     variant="secondary"
                     className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-green-500/10 dark:text-green-500 border dark:border-green-500/20 px-3 py-1 text-[10px] font-bold uppercase tracking-widest"
                   >
-                    {skill.name} • {skill.level}%
+                    {skill.name} • {levelToPercent(skill.level)}%
                   </Badge>
                 ))}
                 {missingSkills.map((skill) => (
