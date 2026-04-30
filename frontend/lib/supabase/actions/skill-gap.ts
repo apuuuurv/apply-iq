@@ -185,6 +185,53 @@ export async function getLatestSkillAnalysis() {
   return data
 }
 
+// Record skill gap analysis from external results (e.g. Resume Analyzer)
+export async function recordSkillGapAnalysis(analysis: {
+  jobDescription: string
+  matchedSkills: string[]
+  missingSkills: any[]
+  overallScore: number
+  analysisResult?: any
+}) {
+  try {
+    const supabase = await createServerActionClient()
+    
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    
+    if (userError || !user) {
+      throw new Error('User not authenticated')
+    }
+
+    const missingSkillsList = analysis.missingSkills.map(s => typeof s === 'string' ? s : s.skill)
+
+    const { data, error } = await supabase
+      .from('skill_gap_analysis')
+      .insert([
+        {
+          user_id: user.id,
+          job_description: analysis.jobDescription,
+          matched_skills: analysis.matchedSkills,
+          missing_skills: missingSkillsList,
+          suggested_skills: missingSkillsList.slice(0, 5),
+          overall_score: analysis.overallScore,
+          analysis_result: analysis.analysisResult || analysis,
+        },
+      ])
+      .select()
+
+    if (error) {
+      console.error('Error recording skill gap analysis:', error)
+      throw error
+    }
+
+    revalidatePath('/dashboard/skills')
+    return data?.[0]
+  } catch (error) {
+    console.error('Error in recordSkillGapAnalysis:', error)
+    throw error
+  }
+}
+
 // Delete skill analysis
 export async function deleteSkillAnalysis(id: string) {
   const supabase = await createServerActionClient()

@@ -43,6 +43,8 @@ import {
 } from "@/lib/supabase/actions/resume"
 import { createClient } from "@/lib/supabase/client"
 import { analyzeResume } from "@/lib/api-client"
+import { syncResumeSkillsToProfile } from "@/lib/supabase/actions/resume-skills-integration"
+import { recordSkillGapAnalysis } from "@/lib/supabase/actions/skill-gap"
 
 export default function ResumeAnalyzerPage() {
   const supabase = createClient()
@@ -80,15 +82,27 @@ export default function ResumeAnalyzerPage() {
 
   // Load persistent Job Description
   useEffect(() => {
-    const savedJD = localStorage.getItem("applyiq_current_jd")
-    if (savedJD) {
-      setJobDescription(savedJD)
+    const fetchUserAndLoadJD = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const savedJD = localStorage.getItem(`applyiq_${user.id}_current_jd`)
+        if (savedJD) {
+          setJobDescription(savedJD)
+        }
+      }
     }
+    fetchUserAndLoadJD()
   }, [])
 
   // Persist Job Description on change
   useEffect(() => {
-    localStorage.setItem("applyiq_current_jd", jobDescription)
+    const saveJD = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        localStorage.setItem(`applyiq_${user.id}_current_jd`, jobDescription)
+      }
+    }
+    saveJD()
   }, [jobDescription])
 
   const loadResumes = async () => {
@@ -206,11 +220,37 @@ export default function ResumeAnalyzerPage() {
             jobDescription,
             matchScore: result.match_score,
             matchedSkills: result.matched_skills,
-            missingSkills: result.missing_skills,
+            missing_skills: result.missing_skills,
             gapSummary: result.skill_gap_summary,
           },
           matchScore: result.match_score,
         })
+        
+        // SYNC: Update user's profile skills with matched skills
+        try {
+          const resumeText = "Extracted from analysis"; // Placeholder or pass actual text if available
+          await syncResumeSkillsToProfile(resumeText);
+        } catch (syncError) {
+          console.error("Skill sync error:", syncError);
+        }
+
+        // SYNC: Update Skill Gap Analysis dashboard
+        try {
+          await recordSkillGapAnalysis({
+            jobDescription,
+            matchedSkills: result.matched_skills,
+            missingSkills: result.missing_skills,
+            overallScore: result.match_score,
+            analysisResult: {
+              gapSummary: result.skill_gap_summary,
+              techMatches: result.tech_stack_matches,
+              secondaryMatches: result.secondary_matches
+            }
+          });
+        } catch (gapError) {
+          console.error("Gap recording error:", gapError);
+        }
+
         loadResumes()
         
         await createNotification({

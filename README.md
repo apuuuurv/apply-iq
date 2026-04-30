@@ -1,16 +1,55 @@
-# ApplyIQ - AI Job Application Tracker & Resume Analyzer
+# 🎯 ApplyIQ — AI-Powered Job Tracker & Resume Analyzer
 
-ApplyIQ is a premium, AI-powered platform designed to streamline your job search. It combines intelligent application tracking with deep resume analysis to help you land your dream job faster.
+[![Vercel](https://img.shields.io/badge/Frontend-Vercel-black?style=for-the-badge&logo=vercel)](https://apply-iq-nu.vercel.app/)
+[![Render](https://img.shields.io/badge/Backend-Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://apply-iq-backend.onrender.com)
+[![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.109+-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Supabase](https://img.shields.io/badge/Supabase-Database-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
 
-![ApplyIQ Logo](/public/icon.svg)
+**ApplyIQ** is a premium, state-of-the-art platform designed to revolutionize the job search experience. By combining deep AI-driven resume analysis with a seamless application tracking system, ApplyIQ helps candidates bridge the gap between their current skills and their dream roles.
+
+---
 
 ## 🚀 Key Features
 
-- **Intelligent Resume Analysis**: Upload your resume and get a semantic match score against any job description.
-- **Skill Gap Analysis**: Automatically identify missing skills and get suggestions on what to add to your resume.
-- **Smart Application Tracking**: A modern, fluid dashboard to manage all your job applications in one place.
-- **Premium UI/UX**: Built with "Aurora" backgrounds, "Liquid Glass" components, and smooth Framer Motion animations.
-- **Secure Authentication**: Integrated with Supabase for robust user management.
+- **🧠 Intelligent Resume Analysis**: Semantic matching using Sentence-Transformers to compare your resume against job descriptions with high precision.
+- **📊 Skill Gap Analysis**: Automatically identifies missing skills and provides actionable suggestions for improvement.
+- **🔄 Auto-Sync Skills**: Extracts skills directly from your resume and synchronizes them with your professional profile.
+- **📅 Smart Application Tracking**: A modern, fluid dashboard to manage your entire job search pipeline in one place.
+- **✨ Premium UI/UX**: Built with "Aurora" backgrounds, "Liquid Glass" components, and smooth Framer Motion animations for a top-tier experience.
+- **🔐 Secure & Private**: Integrated with Supabase Auth and PostgreSQL with Row-Level Security (RLS) to keep your data safe.
+
+---
+
+## 🏗️ System Architecture
+
+ApplyIQ follows a modern decoupled architecture, ensuring scalability and performance.
+
+```mermaid
+graph TD
+    subgraph "Frontend (Next.js 15)"
+        UI[User Interface / Dashboards]
+        SA[Server Actions]
+        UI --> SA
+    end
+
+    subgraph "Backend (FastAPI)"
+        API[Analysis API]
+        NLP[spaCy & Sentence-Transformers]
+        API --> NLP
+    end
+
+    subgraph "Storage & Auth (Supabase)"
+        DB[(PostgreSQL)]
+        Auth[GoTrue Auth]
+        RLS[Row Level Security]
+    end
+
+    SA -- REST API --> API
+    SA -- DB Queries --> DB
+    UI -- Auth --> Auth
+    DB --- RLS
+```
 
 ---
 
@@ -21,118 +60,96 @@ ApplyIQ is a premium, AI-powered platform designed to streamline your job search
 - **Library**: React 19
 - **Styling**: Tailwind CSS v4
 - **Animations**: Framer Motion
-- **Icons**: Lucide React
 - **UI Components**: Shadcn UI (Radix UI)
+- **Icons**: Lucide React
 
 ### Backend
 - **Framework**: FastAPI (Python 3.10+)
-- **NLP**: spaCy (`en_core_web_sm`)
-- **ML Models**: Sentence-Transformers (`all-MiniLM-L6-v2`)
-- **Parsing**: pdfplumber, python-docx
+- **NLP Engine**: spaCy (`en_core_web_sm`)
+- **Semantic Models**: Sentence-Transformers (`all-MiniLM-L6-v2`)
+- **Document Parsing**: pdfplumber, python-docx
 
 ### Database & Auth
 - **Provider**: Supabase (PostgreSQL + GoTrue)
+- **Realtime**: Supabase PostgREST
 
 ---
 
-## ⚙️ Setup & Installation
+## ⚙️ Getting Started
 
 ### 1. Prerequisites
-- **Node.js**: v18 or higher
-- **Python**: 3.10 or higher
-- **Supabase Account**: A free project for Auth and Database
+- **Node.js**: v18.0+
+- **Python**: 3.10+
+- **Supabase Account**: A project for Authentication and Database.
 
-### 2. Frontend Setup (Next.js)
+### 2. Frontend Setup
+```bash
+# Navigate to frontend
+cd frontend
 
-1. **Install Dependencies**:
-   ```bash
-   npm install
-   ```
+# Install dependencies
+npm install
 
-2. **Environment Variables**:
-   Create a `.env.local` file in the root directory:
-   ```env
-   NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
-   ```
+# Setup environment variables
+cp .env.example .env.local
+# Add your Supabase URL and Anon Key to .env.local
 
-3. **Run Development Server**:
-   ```bash
-   npm run dev
-   ```
-   Access at: `http://localhost:3000`
+# Run development server
+npm run dev
+```
+Access at: `http://localhost:3000`
 
-### 3. Backend Setup (FastAPI)
+### 3. Backend Setup
+```bash
+# Navigate to backend
+cd backend
 
-1. **Navigate to Backend**:
-   ```bash
-   cd backend
-   ```
+# Create & activate virtual environment
+python -m venv venv
+source venv/bin/activate # Windows: venv\Scripts\activate
 
-2. **Create Virtual Environment**:
-   ```bash
-   python -m venv venv
-   # Windows
-   venv\Scripts\activate
-   # macOS/Linux
-   source venv/bin/activate
-   ```
+# Install dependencies
+pip install -r requirements.txt
 
-3. **Install Python Packages**:
-   ```bash
-   pip install -r requirements.txt
-   ```
+# Download NLP model
+python -m spacy download en_core_web_sm
 
-4. **Download NLP Model**:
-   ```bash
-   python -m spacy download en_core_web_sm
-   ```
-
-5. **Run the API Server**:
-   ```bash
-   python main.py
-   ```
-   Access API Docs at: `http://localhost:8000/docs`
-
-### 4. Database Setup (Supabase)
-
-1. **Tables**: Ensure you have the following tables in your Supabase project:
-   - `profiles`: Stores user information (id, full_name, etc.)
-   - `job_applications`: Stores job tracking data (user_id, company, position, status, etc.)
-   - `notifications`: Stores user alerts.
-   
-2. **Auth**: Enable Email/Password or Social logins in the Supabase Dashboard.
+# Run the API server
+python main.py
+```
+Access API Docs at: `http://localhost:8000/docs`
 
 ---
 
 ## 📂 Project Structure
 
-```
+```text
 ai-job-tracker/
-├── app/                # Next.js App Router (Pages & Layouts)
-├── components/         # Reusable UI Components
-│   ├── dashboard/      # Dashboard-specific components
-│   ├── landing/        # Landing page sections
-│   └── ui/             # Base Shadcn components
-├── public/             # Static assets (Icons, Logos)
-├── lib/               # Utility functions & Supabase client
-└── backend/           # Python FastAPI Source Code
-    ├── models/        # Pydantic schemas
-    ├── services/      # Business logic (Parsing, Matching)
-    └── main.py        # API Entry point
+├── frontend/           # Next.js 15 Application
+│   ├── app/           # App Router (Pages & Layouts)
+│   ├── components/    # Reusable UI Components
+│   ├── lib/           # Supabase client & Utils
+│   └── public/        # Static assets (icon.svg, etc.)
+├── backend/            # FastAPI Python Service
+│   ├── models/        # Pydantic Schemas
+│   ├── services/      # NLP & Matching Logic
+│   └── main.py        # API Entry Point
+└── scripts/           # SQL Migration & Setup scripts
 ```
 
 ---
 
 ## 🤝 Contributing
 
-We welcome contributions! Please follow these steps:
-1. Fork the project.
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`).
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`).
-4. Push to the branch (`git push origin feature/AmazingFeature`).
-5. Open a Pull Request.
+We welcome contributions! Feel free to open issues or submit pull requests.
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 ---
 
-Developed with ❤️ by Apurv.
+Developed with ❤️ by [Apurv](https://github.com/apuuuurv)
+

@@ -20,6 +20,7 @@ import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { getNotifications, type Notification } from "@/lib/supabase/actions/notifications"
+import { useSkillGap } from "@/lib/context/skill-gap-context"
 
 interface DashboardHeaderProps {
   onMenuClick: () => void
@@ -28,6 +29,7 @@ interface DashboardHeaderProps {
 export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   const router = useRouter()
   const supabase = createClient()
+  const { clearAll } = useSkillGap()
   const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -89,6 +91,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut()
+      clearAll()
       toast.success("Logged out successfully")
       router.push("/login")
     } catch (error) {
